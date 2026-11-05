@@ -1,0 +1,18 @@
+{
+  "name": "DJ X",
+  "description": "Talk to Spotify's real DJ X from the desktop client.",
+  "preview": "preview.png",
+  "main": "djx.js",
+  "readme": "README.md",
+  "authors": [
+    {
+      "name": "Shinsha1337",
+      "url": "https://github.com/Shinsha1337"
+    }
+  ],
+  "tags": [
+    "dj",
+    "requests",
+    "playback"
+  ]
+}
