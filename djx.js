@@ -895,110 +895,54 @@
       button.classList.toggle("djx-active", isDJ(state));
     }
 
-    // Spotify hides its own like button from the player bar while a DJ set is playing. Put an
-    // identical one back into the same widget, so a DJ track can still be liked from the bar.
-    // Our own button carries the same aria-label, so it must never count as the native one.
-    const NATIVE_LIKE = 'button[aria-label="Add to Liked Songs"]:not(#djx-like-button), '
-      + 'button[aria-label="Remove from Liked Songs"]:not(#djx-like-button)';
-
     function tooltip(text) {
       return '<div id="context-menu"><div class="a_QAHZU3VTgG_kDYWmDv" style="background-color:rgb(40,40,40);color:#fff;border-radius:4px;padding:4px 8px;font-size:14px;font-weight:400;box-shadow:rgba(0,0,0,0.3) 0px 16px 24px,rgba(0,0,0,0.2) 0px 6px 8px;line-height:1.4;"><span id="hover-or-focus-tooltip" role="tooltip">'
         + text + "</span></div></div>";
     }
 
-    function likeGlyph(liked) {
-      const icons = sp.SVGIcons || {};
-      const glyph = icons[liked ? "check-alt-fill" : "plus-alt"] || icons[liked ? "check" : "plus"] || "";
-      return `<svg role="img" height="16" width="16" viewBox="0 0 16 16" aria-hidden="true" fill="currentColor">${glyph}</svg>`;
-    }
-
-    function paintLike(button, liked) {
-      const label = liked ? "Remove from Liked Songs" : "Add to Liked Songs";
-      button.innerHTML = likeGlyph(liked);
-      button.setAttribute("aria-label", label);
-      button.setAttribute("aria-pressed", String(liked));
-      button.classList.toggle("djx-liked", liked);
-      button._tippy?.setContent(tooltip(label));
-    }
-
-    async function readLike(button, uri) {
+    // Unblock Spotify's native track curation / like button while DJ is playing.
+    // Spotify's NowPlayingPositiveAction component (module 40550) wraps the native CurationButton
+    // (module 51608) in a DJ check `let { isYourDJContext } = useYourDJContext(); return isYourDJContext ? null : ...`.
+    // By pointing NowPlayingPositiveAction directly to CurationButton, Spotify renders the 100% native
+    // curation button with native tooltips, the green checkmark state, and the multi-playlist sheet popover,
+    // with zero DOM manipulation, zero custom SVGs, and zero React hook corruption.
+    function unblockNativeCuration() {
       try {
-        const [liked] = await sp.Platform.LibraryAPI.contains(uri);
-        if (button.isConnected && button.dataset.uri === uri) paintLike(button, !!liked);
-      } catch { /* the button simply keeps its current glyph */ }
-    }
+        let requireFn = null;
+        window.rspackChunk?.push?.([
+          [Symbol()],
+          {},
+          (req) => { requireFn = req; }
+        ]);
+        if (!requireFn) return;
+        const exp40550 = requireFn(40550);
+        const exp51608 = requireFn(51608);
+        const CurationButton = exp51608?.v;
+        if (!exp40550?.c || !CurationButton || exp40550.c.__djx_unblocked) return;
 
-    async function toggleLike(button) {
-      const uri = button.dataset.uri;
-      const liked = button.getAttribute("aria-pressed") === "true";
-      try {
-        if (liked) await sp.Platform.LibraryAPI.remove({ uris: [uri] });
-        else await sp.Platform.LibraryAPI.add({ uris: [uri] });
-      } catch { return; }
-      paintLike(button, !liked);
-    }
+        const NativeCuration = function(props) {
+          return sp.React.createElement(CurationButton, props);
+        };
+        exp40550.c.type = NativeCuration;
+        exp40550.c.__djx_unblocked = true;
 
-    function mountLikeButton() {
-      const widget = document.querySelector('[data-testid="now-playing-widget-v2"]');
-      const existing = document.getElementById("djx-like-button");
-      const state = sp.Platform.PlayerAPI.getState?.();
-      const uri = state?.item?.uri;
-      const wanted = !!widget && isDJ(state) && uri?.startsWith("spotify:track:") && !widget.querySelector(NATIVE_LIKE);
-      // Spotify's like button lives in the widget's last slot, right of the track info; use that
-      // slot when it is there and fall back to the widget itself if a build drops it.
-      const slot = widget && widget.children.length >= 3 ? widget.lastElementChild : widget;
-      if (!wanted) {
-        existing?.remove();
-        return;
-      }
-      if (existing) {
-        if (slot && existing.parentElement !== slot) slot.append(existing);
-        if (existing.dataset.uri !== uri) {
-          existing.dataset.uri = uri;
-          paintLike(existing, sp.Platform.LibraryAPI?.containsSync?.(uri) === true);
-          readLike(existing, uri);
-        }
-        return;
-      }
-      const button = document.createElement("button");
-      button.id = "djx-like-button";
-      button.type = "button";
-      button.className = "e-10860-legacy-button e-10860-legacy-button-tertiary e-10860-overflow-wrap-anywhere e-10860-button-tertiary--icon-only-small e-10860-button-tertiary--icon-only e-10860-button-tertiary--text-subdued encore-internal-color-text-subdued";
-      button.dataset.uri = uri;
-      paintLike(button, sp.Platform.LibraryAPI?.containsSync?.(uri) === true);
-      button.addEventListener("click", (event) => {
-        event.preventDefault();
-        event.stopImmediatePropagation();
-        toggleLike(button);
-      });
-      if (typeof sp.Tippy === "function") {
-        sp.Tippy(button, { allowHTML: true, content: tooltip("Add to Liked Songs"), animation: "fade", delay: [200, 0] });
-      }
-      slot.append(button);
-      readLike(button, uri);
-    }
-
-    // Spotify's React re-renders the player bar constantly; re-checking the like button on every
-    // mutation is throttled so a re-render cannot turn into a mount/remove storm.
-    let likeMountAt = 0;
-    let likeMounts = 0;
-    function scheduleLikeMount() {
-      const now = Date.now();
-      if (now - likeMountAt < 500) return;
-      likeMountAt = now;
-      mountLikeButton();
-      likeMounts += 1;
+        const el = document.querySelector('.KMxCDV77Kb3sbuKtkwpw');
+        const fiberKey = el ? Object.keys(el).find(k => k.startsWith('__reactFiber$')) : null;
+        const slotFiber = fiberKey ? el[fiberKey] : null;
+        const nccFiber = slotFiber?.child?.sibling;
+        if (nccFiber) nccFiber.type = NativeCuration;
+      } catch { /* graceful fallback */ }
     }
 
     // Keep the button present and mounted across all React re-renders, track changes and narration
     new MutationObserver(() => {
       mountButton();
       syncDjOnAir();
-      scheduleLikeMount();
+      unblockNativeCuration();
     }).observe(document.body, { childList: true, subtree: true });
     mountButton();
     syncDjOnAir();
-    scheduleLikeMount();
+    unblockNativeCuration();
 
     // Intercept clicks on Spotify's native DJ button if it receives clicks
     document.addEventListener("click", (event) => {
@@ -1024,7 +968,7 @@
 
     window.DJX = Object.freeze({
       version: VERSION, open, close, toggle,
-      getStatus: () => ({ pending: state.pending, lastError: state.lastError, lastRequestId: state.lastRequestId, likeMounts }),
+      getStatus: () => ({ pending: state.pending, lastError: state.lastError, lastRequestId: state.lastRequestId }),
     });
     console.info(`[DJX] ${VERSION} loaded`);
   }
