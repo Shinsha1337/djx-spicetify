@@ -1,12 +1,12 @@
 // NAME: DJ X
 // DESCRIPTION: Send text requests to the real Spotify DJ X from desktop.
 // AUTHOR: Shinsha (Shinsha1337)
-// VERSION: 1.0.0
+// VERSION: 1.0.1
 // No API key, external AI service, or background server required.
 (function djx() {
   "use strict";
 
-  const VERSION = "1.0.0";
+  const VERSION = "1.0.1";
   const DJ_URI = "spotify:playlist:37i9dQZF1EYkqdzj48dyYq";
   const DJ_IDS = new Set([
     "37i9dQZF1EYkqdzj48dyYq", "37i9dQZF1EYkqdzj8OSOas", "37i9dQZF1EYkqdzjdvy3mw",

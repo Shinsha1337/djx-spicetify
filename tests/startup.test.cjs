@@ -33,7 +33,7 @@ function start() {
 
 test("startup touches no Spotify UI, waits for nothing, and only hooks the DJ button and the shortcut", () => {
   const app = start();
-  assert.equal(app.window.DJX.version, "1.0.0");
+  assert.equal(app.window.DJX.version, "1.0.1");
   assert.deepEqual(app.created.map((node) => node.tag), ["style"], "only the stylesheet exists before the panel opens");
   assert.deepEqual(app.listeners, ["click", "keydown"], "must intercept the native player DJ button and the shortcut");
   assert.equal(typeof app.window.DJX.toggle, "function");
