@@ -49,6 +49,41 @@
     #djx-button:active {
       transform: scale(0.96) !important;
     }
+    /* The like button Spotify drops from the player bar while a DJ set is playing. Same shape,
+       spacing and hover behaviour as the controls around it. */
+    #djx-like-button {
+      background: transparent !important;
+      border: 0 !important;
+      width: 32px !important;
+      height: 32px !important;
+      min-width: 32px !important;
+      display: inline-flex !important;
+      align-items: center !important;
+      justify-content: center !important;
+      padding: 0 !important;
+      margin-left: 0 !important;
+      border-radius: 50% !important;
+      color: #b3b3b3 !important;
+      cursor: pointer !important;
+      transition: transform 0.15s cubic-bezier(0.3, 0, 0, 1), color 0.15s cubic-bezier(0.3, 0, 0, 1) !important;
+      vertical-align: middle !important;
+    }
+    #djx-like-button svg {
+      color: inherit !important;
+      transition: inherit !important;
+    }
+    #djx-like-button:hover {
+      color: #ffffff !important;
+      transform: scale(1.08) !important;
+    }
+    #djx-like-button:active {
+      transform: scale(0.96) !important;
+    }
+    /* Liked tracks get Spotify's own accent, the same green its stock button uses. */
+    #djx-like-button.djx-liked,
+    #djx-like-button.djx-liked:hover {
+      color: var(--text-bright-accent, #1ed760) !important;
+    }
     /* Popup panel with smooth slide-up entrance and fade */
     #djx-panel {
       position: fixed;
