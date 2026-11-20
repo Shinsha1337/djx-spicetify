@@ -7,7 +7,7 @@
 ## Features
 
 - **Native DJ button** — sits in the player bar left of Lyrics with Spotify's own Encore classes, tooltip, and hover behavior. It stays put while DJ narrates or a request is in flight, when Spotify's stock button disappears. While a DJ set is playing, the icon takes DJ's accent green.
-- **Pick your DJ & DJ commentary** — right-click the DJ button to switch DJ voice personas (6 languages, 14 voices with audio previews) or toggle **DJ commentary** (**Introduce each set** / **Don’t break the flow**) cleanly in English even in regions where the controls are hidden.
+- **DJ settings via right-click (just like mobile)** — right-click the DJ button to change DJ settings just like in the Spotify mobile app: open **Pick your DJ** (6 languages, 14 voice personas with audio previews) or switch **DJ commentary** (**Introduce each set** / **Don’t break the flow**), working cleanly even on desktop and in regions where Spotify hides these menus.
 - **Prompt ideas from Spotify** — the cards next to **Let DJ pick** are generated server-side for the track playing right now, with shimmering placeholders while they load. Nothing is hardcoded.
 - **Let DJ pick** — hands the choice to DJ with no prompt at all, the way the phone's button does, so you never get "Based on your request" narration.
 - **Phone-matched layout** — card sizes, gaps, corners and the outlined card style are measured from the mobile app, so the sheet reads as part of the client.
@@ -88,7 +88,7 @@ Click the DJ icon in the player bar or press **Shift + D** — the sheet opens a
 - **Pick a suggestion** — click any card to send it as is; the row pages with the mouse wheel.
 - **Let DJ pick** — hand the choice to DJ without describing anything.
 - **Dismiss** — click outside the sheet or press **Escape**; the draft is kept until you send it.
-- **DJ settings** — right-click the DJ icon in the player bar to open **Pick your DJ** (with voice previews) or **DJ commentary**; if a DJ session is playing when you change either setting, you can restart DJ right away or apply it on the next session.
+- **DJ settings (right-click)** — right-click the DJ icon in the player bar to change DJ settings just like in the Spotify mobile app (**Pick your DJ** with voice previews and **DJ commentary**); if a DJ session is currently playing when you switch, you can restart DJ right away or apply it on the next session.
 
 ## Development
 
