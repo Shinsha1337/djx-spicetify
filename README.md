@@ -1,25 +1,21 @@
 # DJ X
 
-**DJ X** puts Spotify's real DJ one click away in the desktop client — open the sheet, say what you want to hear, and Spotify's own DJ builds the set and narrates it. No API key, no extra account, no background server: your existing session does the work.
+Send text requests to Spotify DJ directly from the desktop client. Open the panel, type what you want to hear or pick a suggestion, and Spotify DJ builds the set.
 
 [![preview](https://github.com/Shinsha1337/djx-spicetify/raw/main/preview.png)](https://github.com/Shinsha1337/djx-spicetify/blob/main/preview.png?raw=true)
 
 ## Features
 
-- **Native DJ button** — sits in the player bar left of Lyrics with Spotify's own Encore classes, tooltip, and hover behavior. It stays put while DJ narrates or a request is in flight, when Spotify's stock button disappears. While a DJ set is playing, the icon takes DJ's accent green.
-- **DJ settings via right-click (just like mobile)** — right-click the DJ button to change DJ settings just like in the Spotify mobile app: open **Pick your DJ** (6 languages, 14 voice personas with audio previews) or switch **DJ commentary** (**Introduce each set** / **Don’t break the flow**), working cleanly even on desktop and in regions where Spotify hides these menus.
-- **Prompt ideas from Spotify** — the cards next to **Let DJ pick** are generated server-side for the track playing right now, with shimmering placeholders while they load. Nothing is hardcoded.
-- **Let DJ pick** — hands the choice to DJ with no prompt at all, the way the phone's button does, so you never get "Based on your request" narration.
-- **Phone-matched layout** — card sizes, gaps, corners and the outlined card style are measured from the mobile app, so the sheet reads as part of the client.
-- **One notch, one page** — the idea row moves a whole pair at a time and always lands on a card start. No half-cut cards at the edges, on any window size.
-- **Closes on send** — the sheet goes away the moment a request is out; DJ works in the background and failures arrive as Spotify's own notification.
-- **No repeated introductions** — a request sent while DJ is already playing goes into the running session instead of restarting it.
+- **Player bar button**: Persistent DJ button left of Lyrics with native Spotify styling and hover state. Highlights in green while DJ is playing.
+- **Right-click DJ settings**: Right-click the DJ button for **Pick your DJ** (14 voices across 6 languages, with audio previews) and **DJ commentary** (**Introduce each set** / **Don’t break the flow**), matching the mobile app.
+- **Prompt suggestions**: Fetches up to 3 prompt cards from Spotify based on the currently playing track.
+- **Let DJ pick**: Hands control back to DJ without a text prompt.
+- **Session continuity**: Sending a request during an active DJ session updates the current set instead of restarting it.
 
-## Important compatibility note
+## Requirements
 
-DJ X works through Spicetify, so it requires the official **Spotify Desktop** app. Spicetify does **not** work with the Microsoft Store version of Spotify — install the desktop app from the [official Spotify website](https://www.spotify.com/download/).
-
-DJ requests require **Spotify Premium** and an account or region where Spotify has enabled the DJ feature. Installing the extension does not enable DJ for unsupported accounts.
+- Official **Spotify Desktop** app from [spotify.com/download](https://www.spotify.com/download/) with Spicetify installed (the Microsoft Store version is not supported).
+- **Spotify Premium** on an account with Spotify DJ available. Installing this extension does not unlock DJ on unsupported accounts.
 
 ## Installation through Spicetify Marketplace
 
