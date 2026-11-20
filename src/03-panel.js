@@ -9,7 +9,9 @@
 
     const client = createClient(sp);
     const suggestionCache = new Map();
-    const cachedSettings = normalizeDJSettings(sp.Platform.ProductStateAPI?.getCachedValues?.());
+    const cachedSettings = normalizeDJSettings(
+      sp.Platform.ProductStateAPI?.getCachedValues?.() || sp.Platform.initialProductState
+    );
     const state = {
       draft: "",
       pending: 0,
@@ -30,11 +32,19 @@
     style.textContent = STYLE;
     document.head.append(style);
 
+    let styleObserver;
+    let styleMoves = 0;
     function keepStyleLast() {
-      if (style !== document.head.lastElementChild) document.head.append(style);
+      if (style === document.head.lastElementChild) return;
+      if (++styleMoves > 16) {
+        styleObserver?.disconnect();
+        return;
+      }
+      document.head.append(style);
     }
     keepStyleLast();
-    new MutationObserver(keepStyleLast).observe(document.head, { childList: true });
+    styleObserver = new MutationObserver(keepStyleLast);
+    styleObserver.observe(document.head, { childList: true });
 
     // Position popup neatly above the player bar, right-aligned to the player controls
     function place(root) {

@@ -215,15 +215,25 @@
     return { personaId, commentary };
   }
 
-  async function readDJSettings(spicetify) {
+  async function readProductStateValues(spicetify) {
     const ps = spicetify?.Platform?.ProductStateAPI;
-    if (!ps) return normalizeDJSettings();
+    if (!ps) return null;
     try {
-      const values = (await ps.getValues?.()) || ps.getCachedValues?.() || {};
-      return normalizeDJSettings(values);
-    } catch {
-      return normalizeDJSettings(ps.getCachedValues?.() || {});
-    }
+      // Bypass ProductStateAPI's 1-hour JS cache when the underlying Esperanto client is exposed.
+      const live = await ps.productStateApi?.getValues?.({});
+      if (live?.pairs && Object.keys(live.pairs).length) return live.pairs;
+    } catch {}
+    try {
+      const values = await ps.getValues?.();
+      if (values && Object.keys(values).length) return values;
+    } catch {}
+    const cached = ps.getCachedValues?.() || spicetify?.Platform?.initialProductState;
+    return cached && Object.keys(cached).length ? cached : null;
+  }
+
+  async function readDJSettings(spicetify) {
+    const values = await readProductStateValues(spicetify);
+    return normalizeDJSettings(values || {});
   }
 
   async function writeDJSetting(spicetify, key, value) {
@@ -474,7 +484,7 @@
       PICK_PAYLOAD, encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts,
       DJ_LANGUAGES, COMMENTARY_OPTIONS, DEFAULT_PERSONA_ID, DEFAULT_COMMENTARY_MODE,
       PRODUCT_STATE_DJ_LANGUAGE, PRODUCT_STATE_DJ_COMMENTARY,
-      findPersona, normalizeDJSettings, readDJSettings, writeDJSetting,
+      findPersona, normalizeDJSettings, readProductStateValues, readDJSettings, writeDJSetting,
     };
     return;
   }

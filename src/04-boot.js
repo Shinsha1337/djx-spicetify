@@ -103,8 +103,9 @@
       syncDjOnAir();
       syncPanelTrack();
     });
-    sp.Platform.ProductStateAPI?.getEvents?.()?.addListener?.("update", () => {
-      void syncDJSettings();
+    sp.Platform.ProductStateAPI?.subValues?.((values) => {
+      settingsEpoch++;
+      applySyncedProductState(values);
     });
     mountButton();
     syncDjOnAir();

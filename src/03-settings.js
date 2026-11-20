@@ -1,10 +1,49 @@
+    let activeModal = null;
+    let activeMenu = null;
+    let settingsEpoch = 0;
+
+    function syncSettingsUI() {
+      syncPanelSettings();
+      if (activeModal?.modal) {
+        for (const row of activeModal.modal.querySelectorAll("[data-persona-id]")) {
+          const active = row.dataset.personaId === state.personaId;
+          row.classList.toggle("djx-selected", active);
+          row.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
+        }
+        for (const row of activeModal.modal.querySelectorAll("[data-commentary-id]")) {
+          const active = row.dataset.commentaryId === state.commentary;
+          row.classList.toggle("djx-selected", active);
+          row.setAttribute("aria-checked", String(active));
+        }
+      }
+      if (activeMenu?.menu) {
+        const voiceSub = activeMenu.menu.querySelector('[data-sub="voice"]');
+        const commentarySub = activeMenu.menu.querySelector('[data-sub="commentary"]');
+        if (voiceSub) voiceSub.textContent = findPersona(state.personaId).personaName;
+        if (commentarySub) {
+          const opt = COMMENTARY_OPTIONS.find((item) => item.id === state.commentary) || COMMENTARY_OPTIONS[0];
+          commentarySub.textContent = opt.title;
+        }
+      }
+    }
+
+    function applySyncedProductState(values) {
+      if (!values || !Object.keys(values).length) return;
+      const next = normalizeDJSettings(values);
+      state.personaId = next.personaId;
+      state.commentary = next.commentary;
+      syncSettingsUI();
+    }
+
     async function syncDJSettings() {
+      const ticket = settingsEpoch;
       try {
-        const next = await readDJSettings(sp);
-        state.personaId = next.personaId;
-        state.commentary = next.commentary;
-        syncPanelSettings();
-        return next;
+        const values = await readProductStateValues(sp);
+        if (ticket !== settingsEpoch || !values) {
+          return { personaId: state.personaId, commentary: state.commentary };
+        }
+        applySyncedProductState(values);
+        return { personaId: state.personaId, commentary: state.commentary };
       } catch {
         return { personaId: state.personaId, commentary: state.commentary };
       }
@@ -86,8 +125,6 @@
         }
       });
     }
-
-    let activeModal = null;
 
     closeModal = function closeCurrentModal(keepPaused = false) {
       stopPreview(keepPaused);
@@ -221,14 +258,18 @@
 
     async function applySettingChange(key, value) {
       const prev = key === PRODUCT_STATE_DJ_LANGUAGE ? state.personaId : state.commentary;
+      const writeTicket = ++settingsEpoch;
       try {
         await writeDJSetting(sp, key, value);
-        if (key === PRODUCT_STATE_DJ_LANGUAGE) state.personaId = value;
-        else state.commentary = value;
-        syncPanelSettings();
+        if (writeTicket === settingsEpoch) {
+          if (key === PRODUCT_STATE_DJ_LANGUAGE) state.personaId = value;
+          else state.commentary = value;
+          syncSettingsUI();
+        }
       } catch (error) {
         const failure = readableError(error);
         sp.showNotification?.(failure.message, true);
+        syncSettingsUI();
         return false;
       }
       const djPlaying = isDJ(sp.Platform.PlayerAPI.getState?.());
@@ -237,14 +278,7 @@
     }
 
     function openVoicePicker() {
-      syncDJSettings().then(() => {
-        if (!activeModal?.modal) return;
-        for (const row of activeModal.modal.querySelectorAll("[data-persona-id]")) {
-          const active = row.dataset.personaId === state.personaId;
-          row.classList.toggle("djx-selected", active);
-          row.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
-        }
-      });
+      void syncDJSettings();
 
       mountModal({
         title: "Pick your DJ",
@@ -298,14 +332,7 @@
                   item.classList.toggle("djx-selected", active);
                   item.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
                 }
-                const ok = await applySettingChange(PRODUCT_STATE_DJ_LANGUAGE, persona.personaId);
-                if (!ok) {
-                  for (const item of body.querySelectorAll("[data-persona-id]")) {
-                    const active = item.dataset.personaId === state.personaId;
-                    item.classList.toggle("djx-selected", active);
-                    item.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
-                  }
-                }
+                await applySettingChange(PRODUCT_STATE_DJ_LANGUAGE, persona.personaId);
               };
 
               selectBtn.addEventListener("click", choose);
@@ -326,14 +353,7 @@
     }
 
     function openCommentarySettings() {
-      syncDJSettings().then(() => {
-        if (!activeModal?.modal) return;
-        for (const row of activeModal.modal.querySelectorAll("[data-commentary-id]")) {
-          const active = row.dataset.commentaryId === state.commentary;
-          row.classList.toggle("djx-selected", active);
-          row.setAttribute("aria-checked", String(active));
-        }
-      });
+      void syncDJSettings();
 
       mountModal({
         title: "DJ commentary",
@@ -364,14 +384,7 @@
                 item.classList.toggle("djx-selected", active);
                 item.setAttribute("aria-checked", String(active));
               }
-              const ok = await applySettingChange(PRODUCT_STATE_DJ_COMMENTARY, option.id);
-              if (!ok) {
-                for (const item of body.querySelectorAll("[data-commentary-id]")) {
-                  const active = item.dataset.commentaryId === state.commentary;
-                  item.classList.toggle("djx-selected", active);
-                  item.setAttribute("aria-checked", String(active));
-                }
-              }
+              await applySettingChange(PRODUCT_STATE_DJ_COMMENTARY, option.id);
             });
             body.append(row);
           }
@@ -380,8 +393,6 @@
         },
       });
     }
-
-    let activeMenu = null;
 
     closeContextMenu = function closeMenu() {
       const current = activeMenu;
@@ -496,7 +507,5 @@
       document.body.append(menu);
       placeContextMenu(menu, anchor, event);
       menu.querySelector(".djx-ctx-item")?.focus();
-      syncDJSettings().then(() => {
-        if (activeMenu?.menu === menu) updateLabels();
-      });
+      void syncDJSettings();
     }

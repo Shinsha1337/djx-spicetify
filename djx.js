@@ -215,15 +215,25 @@
     return { personaId, commentary };
   }
 
-  async function readDJSettings(spicetify) {
+  async function readProductStateValues(spicetify) {
     const ps = spicetify?.Platform?.ProductStateAPI;
-    if (!ps) return normalizeDJSettings();
+    if (!ps) return null;
     try {
-      const values = (await ps.getValues?.()) || ps.getCachedValues?.() || {};
-      return normalizeDJSettings(values);
-    } catch {
-      return normalizeDJSettings(ps.getCachedValues?.() || {});
-    }
+      // Bypass ProductStateAPI's 1-hour JS cache when the underlying Esperanto client is exposed.
+      const live = await ps.productStateApi?.getValues?.({});
+      if (live?.pairs && Object.keys(live.pairs).length) return live.pairs;
+    } catch {}
+    try {
+      const values = await ps.getValues?.();
+      if (values && Object.keys(values).length) return values;
+    } catch {}
+    const cached = ps.getCachedValues?.() || spicetify?.Platform?.initialProductState;
+    return cached && Object.keys(cached).length ? cached : null;
+  }
+
+  async function readDJSettings(spicetify) {
+    const values = await readProductStateValues(spicetify);
+    return normalizeDJSettings(values || {});
   }
 
   async function writeDJSetting(spicetify, key, value) {
@@ -474,7 +484,7 @@
       PICK_PAYLOAD, encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts,
       DJ_LANGUAGES, COMMENTARY_OPTIONS, DEFAULT_PERSONA_ID, DEFAULT_COMMENTARY_MODE,
       PRODUCT_STATE_DJ_LANGUAGE, PRODUCT_STATE_DJ_COMMENTARY,
-      findPersona, normalizeDJSettings, readDJSettings, writeDJSetting,
+      findPersona, normalizeDJSettings, readProductStateValues, readDJSettings, writeDJSetting,
     };
     return;
   }
@@ -1110,7 +1120,9 @@
 
     const client = createClient(sp);
     const suggestionCache = new Map();
-    const cachedSettings = normalizeDJSettings(sp.Platform.ProductStateAPI?.getCachedValues?.());
+    const cachedSettings = normalizeDJSettings(
+      sp.Platform.ProductStateAPI?.getCachedValues?.() || sp.Platform.initialProductState
+    );
     const state = {
       draft: "",
       pending: 0,
@@ -1131,11 +1143,19 @@
     style.textContent = STYLE;
     document.head.append(style);
 
+    let styleObserver;
+    let styleMoves = 0;
     function keepStyleLast() {
-      if (style !== document.head.lastElementChild) document.head.append(style);
+      if (style === document.head.lastElementChild) return;
+      if (++styleMoves > 16) {
+        styleObserver?.disconnect();
+        return;
+      }
+      document.head.append(style);
     }
     keepStyleLast();
-    new MutationObserver(keepStyleLast).observe(document.head, { childList: true });
+    styleObserver = new MutationObserver(keepStyleLast);
+    styleObserver.observe(document.head, { childList: true });
 
     // Position popup neatly above the player bar, right-aligned to the player controls
     function place(root) {
@@ -1484,13 +1504,52 @@
       view.input.focus();
       syncDJSettings().then(syncPanelSettings).catch(() => {});
     }
+    let activeModal = null;
+    let activeMenu = null;
+    let settingsEpoch = 0;
+
+    function syncSettingsUI() {
+      syncPanelSettings();
+      if (activeModal?.modal) {
+        for (const row of activeModal.modal.querySelectorAll("[data-persona-id]")) {
+          const active = row.dataset.personaId === state.personaId;
+          row.classList.toggle("djx-selected", active);
+          row.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
+        }
+        for (const row of activeModal.modal.querySelectorAll("[data-commentary-id]")) {
+          const active = row.dataset.commentaryId === state.commentary;
+          row.classList.toggle("djx-selected", active);
+          row.setAttribute("aria-checked", String(active));
+        }
+      }
+      if (activeMenu?.menu) {
+        const voiceSub = activeMenu.menu.querySelector('[data-sub="voice"]');
+        const commentarySub = activeMenu.menu.querySelector('[data-sub="commentary"]');
+        if (voiceSub) voiceSub.textContent = findPersona(state.personaId).personaName;
+        if (commentarySub) {
+          const opt = COMMENTARY_OPTIONS.find((item) => item.id === state.commentary) || COMMENTARY_OPTIONS[0];
+          commentarySub.textContent = opt.title;
+        }
+      }
+    }
+
+    function applySyncedProductState(values) {
+      if (!values || !Object.keys(values).length) return;
+      const next = normalizeDJSettings(values);
+      state.personaId = next.personaId;
+      state.commentary = next.commentary;
+      syncSettingsUI();
+    }
+
     async function syncDJSettings() {
+      const ticket = settingsEpoch;
       try {
-        const next = await readDJSettings(sp);
-        state.personaId = next.personaId;
-        state.commentary = next.commentary;
-        syncPanelSettings();
-        return next;
+        const values = await readProductStateValues(sp);
+        if (ticket !== settingsEpoch || !values) {
+          return { personaId: state.personaId, commentary: state.commentary };
+        }
+        applySyncedProductState(values);
+        return { personaId: state.personaId, commentary: state.commentary };
       } catch {
         return { personaId: state.personaId, commentary: state.commentary };
       }
@@ -1572,8 +1631,6 @@
         }
       });
     }
-
-    let activeModal = null;
 
     closeModal = function closeCurrentModal(keepPaused = false) {
       stopPreview(keepPaused);
@@ -1707,14 +1764,18 @@
 
     async function applySettingChange(key, value) {
       const prev = key === PRODUCT_STATE_DJ_LANGUAGE ? state.personaId : state.commentary;
+      const writeTicket = ++settingsEpoch;
       try {
         await writeDJSetting(sp, key, value);
-        if (key === PRODUCT_STATE_DJ_LANGUAGE) state.personaId = value;
-        else state.commentary = value;
-        syncPanelSettings();
+        if (writeTicket === settingsEpoch) {
+          if (key === PRODUCT_STATE_DJ_LANGUAGE) state.personaId = value;
+          else state.commentary = value;
+          syncSettingsUI();
+        }
       } catch (error) {
         const failure = readableError(error);
         sp.showNotification?.(failure.message, true);
+        syncSettingsUI();
         return false;
       }
       const djPlaying = isDJ(sp.Platform.PlayerAPI.getState?.());
@@ -1723,14 +1784,7 @@
     }
 
     function openVoicePicker() {
-      syncDJSettings().then(() => {
-        if (!activeModal?.modal) return;
-        for (const row of activeModal.modal.querySelectorAll("[data-persona-id]")) {
-          const active = row.dataset.personaId === state.personaId;
-          row.classList.toggle("djx-selected", active);
-          row.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
-        }
-      });
+      void syncDJSettings();
 
       mountModal({
         title: "Pick your DJ",
@@ -1784,14 +1838,7 @@
                   item.classList.toggle("djx-selected", active);
                   item.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
                 }
-                const ok = await applySettingChange(PRODUCT_STATE_DJ_LANGUAGE, persona.personaId);
-                if (!ok) {
-                  for (const item of body.querySelectorAll("[data-persona-id]")) {
-                    const active = item.dataset.personaId === state.personaId;
-                    item.classList.toggle("djx-selected", active);
-                    item.querySelector(".djx-option-select")?.setAttribute("aria-checked", String(active));
-                  }
-                }
+                await applySettingChange(PRODUCT_STATE_DJ_LANGUAGE, persona.personaId);
               };
 
               selectBtn.addEventListener("click", choose);
@@ -1812,14 +1859,7 @@
     }
 
     function openCommentarySettings() {
-      syncDJSettings().then(() => {
-        if (!activeModal?.modal) return;
-        for (const row of activeModal.modal.querySelectorAll("[data-commentary-id]")) {
-          const active = row.dataset.commentaryId === state.commentary;
-          row.classList.toggle("djx-selected", active);
-          row.setAttribute("aria-checked", String(active));
-        }
-      });
+      void syncDJSettings();
 
       mountModal({
         title: "DJ commentary",
@@ -1850,14 +1890,7 @@
                 item.classList.toggle("djx-selected", active);
                 item.setAttribute("aria-checked", String(active));
               }
-              const ok = await applySettingChange(PRODUCT_STATE_DJ_COMMENTARY, option.id);
-              if (!ok) {
-                for (const item of body.querySelectorAll("[data-commentary-id]")) {
-                  const active = item.dataset.commentaryId === state.commentary;
-                  item.classList.toggle("djx-selected", active);
-                  item.setAttribute("aria-checked", String(active));
-                }
-              }
+              await applySettingChange(PRODUCT_STATE_DJ_COMMENTARY, option.id);
             });
             body.append(row);
           }
@@ -1866,8 +1899,6 @@
         },
       });
     }
-
-    let activeMenu = null;
 
     closeContextMenu = function closeMenu() {
       const current = activeMenu;
@@ -1982,9 +2013,7 @@
       document.body.append(menu);
       placeContextMenu(menu, anchor, event);
       menu.querySelector(".djx-ctx-item")?.focus();
-      syncDJSettings().then(() => {
-        if (activeMenu?.menu === menu) updateLabels();
-      });
+      void syncDJSettings();
     }
     function toggle() {
       if (view && !view.closing) close();
@@ -2091,8 +2120,9 @@
       syncDjOnAir();
       syncPanelTrack();
     });
-    sp.Platform.ProductStateAPI?.getEvents?.()?.addListener?.("update", () => {
-      void syncDJSettings();
+    sp.Platform.ProductStateAPI?.subValues?.((values) => {
+      settingsEpoch++;
+      applySyncedProductState(values);
     });
     mountButton();
     syncDjOnAir();

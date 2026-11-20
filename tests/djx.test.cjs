@@ -5,7 +5,7 @@ const {
   encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts,
   DJ_LANGUAGES, COMMENTARY_OPTIONS, DEFAULT_PERSONA_ID, DEFAULT_COMMENTARY_MODE,
   PRODUCT_STATE_DJ_LANGUAGE, PRODUCT_STATE_DJ_COMMENTARY,
-  findPersona, normalizeDJSettings, readDJSettings, writeDJSetting,
+  findPersona, normalizeDJSettings, readProductStateValues, readDJSettings, writeDJSetting,
 } = require("../djx.js");
 
 test("the DJ palette comes from the context metadata and tolerates #AARRGGBB", () => {
@@ -325,6 +325,20 @@ test("DJ settings read, normalize, and write ProductStateAPI cleanly", async () 
     personaId: DEFAULT_PERSONA_ID,
     commentary: DEFAULT_COMMENTARY_MODE,
   });
+
+  // Live Esperanto productStateApi.getValues({}) bypasses stale 1-hour JS cache in ProductStateAPI.getValues().
+  const staleWrapper = {
+    Platform: {
+      ProductStateAPI: {
+        productStateApi: {
+          getValues: async () => ({ pairs: { [PRODUCT_STATE_DJ_COMMENTARY]: "sometimes", [PRODUCT_STATE_DJ_LANGUAGE]: "en-GB-2" } }),
+        },
+        getValues: async () => ({ [PRODUCT_STATE_DJ_COMMENTARY]: "default", [PRODUCT_STATE_DJ_LANGUAGE]: "en-US-x" }),
+      },
+    },
+  };
+  assert.deepEqual(await readDJSettings(staleWrapper), { personaId: "en-GB-2", commentary: "sometimes" });
+  assert.equal(await readProductStateValues({ Platform: {} }), null);
 });
 
 test("client.restart cancels pending prompts and replays DJ context, and multi-persona DJ URIs are detected", async () => {
