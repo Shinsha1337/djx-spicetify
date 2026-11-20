@@ -1,6 +1,12 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
-const { createClient, encodePromptSignal, normalizePrompt, isDJ, isDJButton, djPalette, encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts } = require("../djx.js");
+const {
+  createClient, encodePromptSignal, normalizePrompt, isDJ, isDJButton, djPalette,
+  encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts,
+  DJ_LANGUAGES, COMMENTARY_OPTIONS, DEFAULT_PERSONA_ID, DEFAULT_COMMENTARY_MODE,
+  PRODUCT_STATE_DJ_LANGUAGE, PRODUCT_STATE_DJ_COMMENTARY,
+  findPersona, normalizeDJSettings, readDJSettings, writeDJSetting,
+} = require("../djx.js");
 
 test("the DJ palette comes from the context metadata and tolerates #AARRGGBB", () => {
   assert.deepEqual(djPalette({
@@ -268,4 +274,77 @@ test("suggestions follow the playing track and fail silently", async () => {
   } finally {
     globalThis.fetch = original;
   }
+});
+
+test("official DJ persona catalog and commentary options match Spotify configuration", () => {
+  assert.equal(DJ_LANGUAGES.length, 6);
+  const allPersonas = DJ_LANGUAGES.flatMap((group) => group.personas);
+  assert.equal(allPersonas.length, 14);
+  for (const persona of allPersonas) {
+    assert.ok(persona.personaId && persona.personaName && persona.descriptor);
+    assert.match(persona.previewUrl, /^https:\/\/lexicon-assets\.spotifycdn\.com\/dj-persona-previews\//);
+  }
+  assert.deepEqual(COMMENTARY_OPTIONS.map((opt) => opt.id), ["default", "sometimes"]);
+  assert.equal(findPersona("en-US-1").personaName, "Nisha (IND)");
+  assert.equal(findPersona("en-US-1").languageDisplayName, "English");
+  assert.equal(findPersona("es-MX-1").languageDisplayName, "Spanish");
+  assert.equal(findPersona("unknown-id").personaId, DEFAULT_PERSONA_ID);
+});
+
+test("DJ settings read, normalize, and write ProductStateAPI cleanly", async () => {
+  assert.deepEqual(normalizeDJSettings({}), {
+    personaId: DEFAULT_PERSONA_ID,
+    commentary: DEFAULT_COMMENTARY_MODE,
+  });
+  assert.deepEqual(normalizeDJSettings({ "dj-language": "bogus", "dj-voice-commentary": "weird" }), {
+    personaId: DEFAULT_PERSONA_ID,
+    commentary: DEFAULT_COMMENTARY_MODE,
+  });
+  assert.deepEqual(normalizeDJSettings({ "dj-language": "en-GB-2", "dj-voice-commentary": "sometimes" }), {
+    personaId: "en-GB-2",
+    commentary: "sometimes",
+  });
+
+  const store = {
+    [PRODUCT_STATE_DJ_LANGUAGE]: "en-US-1",
+    [PRODUCT_STATE_DJ_COMMENTARY]: "sometimes",
+  };
+  const sp = {
+    Platform: {
+      ProductStateAPI: {
+        getValues: async () => ({ ...store }),
+        setValues: async (pairs) => { Object.assign(store, pairs); },
+      },
+    },
+  };
+  assert.deepEqual(await readDJSettings(sp), { personaId: "en-US-1", commentary: "sometimes" });
+  await writeDJSetting(sp, PRODUCT_STATE_DJ_LANGUAGE, "de-DE-z");
+  await writeDJSetting(sp, PRODUCT_STATE_DJ_COMMENTARY, "default");
+  assert.deepEqual(store, { "dj-language": "de-DE-z", "dj-voice-commentary": "default" });
+  assert.deepEqual(await readDJSettings({ Platform: {} }), {
+    personaId: DEFAULT_PERSONA_ID,
+    commentary: DEFAULT_COMMENTARY_MODE,
+  });
+});
+
+test("client.restart cancels pending prompts and replays DJ context, and multi-persona DJ URIs are detected", async () => {
+  assert.equal(isDJ({ context: { uri: "spotify:playlist:37i9dQZF1EYkqdzj8OSOas" } }), true);
+  let release;
+  const held = new Promise((resolve) => { release = resolve; });
+  let started;
+  const startedPromise = new Promise((resolve) => { started = resolve; });
+  const { client, calls } = fixture({
+    onCommand: async () => {
+      started();
+      await held;
+    },
+  });
+  const first = client.request("metal");
+  await startedPromise;
+  const second = assert.rejects(client.request("jazz"), { code: "cancelled" });
+  await client.restart();
+  release();
+  await first.catch(() => {});
+  await second;
+  assert.equal(calls.some((call) => call.publicPlay?.[0]?.uri === DJ_URI), true);
 });

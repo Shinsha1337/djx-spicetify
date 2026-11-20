@@ -8,6 +8,12 @@
     // variable the active button uses, so the two never drift apart.
     pick: `<svg role="img" height="24" width="24" aria-hidden="true" viewBox="0 0 24 24" style="fill: var(--djx-accent, #19E68C); color: var(--djx-accent, #19E68C);"><path d="${DJ_ICON_PATH_24}"/></svg>`,
     dj: '<svg role="img" height="16" width="16" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M7.813 14.497A6.5 6.5 0 0 1 1.5 8.016c.008-3.553 2.71-5.744 5.043-6.078.85-.121 1.288.037 1.564.246.312.238.553.639.822 1.276q.115.277.239.602c.451 1.167 1.05 2.717 2.505 3.81 1.01.76 1.46 1.529 1.592 2.209.13.679-.037 1.375-.468 2.03-.88 1.34-2.793 2.388-4.844 2.388zm-.037 1.5A8 8 0 1 0 0 8.032c0 4.34 3.464 7.87 7.776 7.965m6.666-7.124c-.358-.788-.979-1.532-1.868-2.2-1.082-.813-1.51-1.9-1.967-3.06a31 31 0 0 0-.296-.736 6.3 6.3 0 0 0-.605-1.151 6.53 6.53 0 0 1 4.39 4.01 6.5 6.5 0 0 1 .346 3.137"/></svg>',
+    voice: '<svg role="img" height="16" width="16" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M8 1a2.75 2.75 0 0 0-2.75 2.75v4a2.75 2.75 0 0 0 5.5 0v-4A2.75 2.75 0 0 0 8 1M6.75 3.75a1.25 1.25 0 1 1 2.5 0v4a1.25 1.25 0 1 1-2.5 0z"/><path d="M3.5 7.75a.75.75 0 0 0-1.5 0A6 6 0 0 0 7.25 13.7v.8H5.5a.75.75 0 0 0 0 1.5h5a.75.75 0 0 0 0-1.5H8.75v-.8A6 6 0 0 0 14 7.75a.75.75 0 0 0-1.5 0 4.5 4.5 0 0 1-9 0"/></svg>',
+    commentary: '<svg role="img" height="16" width="16" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M2.5 2.5A1.5 1.5 0 0 0 1 4v6.5A1.5 1.5 0 0 0 2.5 12h1.75v2.25a.75.75 0 0 0 1.22.584L9.013 12H13.5a1.5 1.5 0 0 0 1.5-1.5V4a1.5 1.5 0 0 0-1.5-1.5zm0 1.5h11v6.5H8.5l-2.75 2.138V10.5H2.5z"/></svg>',
+    play: '<svg role="img" height="14" width="14" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M3 1.713a.7.7 0 0 1 1.05-.607l10.89 6.288a.7.7 0 0 1 0 1.212L4.05 14.894A.7.7 0 0 1 3 14.288z"/></svg>',
+    stop: '<svg role="img" height="14" width="14" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><rect x="3" y="3" width="10" height="10" rx="1.5"/></svg>',
+    check: '<svg role="img" height="16" width="16" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M15.53 2.47a.75.75 0 0 1 0 1.06L4.907 14.153.47 9.716a.75.75 0 0 1 1.06-1.06l3.377 3.376L14.47 2.47a.75.75 0 0 1 1.06 0"/></svg>',
+    close: '<svg role="img" height="16" width="16" aria-hidden="true" viewBox="0 0 16 16" fill="currentColor"><path d="M2.47 2.47a.75.75 0 0 1 1.06 0L8 6.94l4.47-4.47a.75.75 0 1 1 1.06 1.06L9.06 8l4.47 4.47a.75.75 0 1 1-1.06 1.06L8 9.06l-4.47 4.47a.75.75 0 0 1-1.06-1.06L6.94 8 2.47 3.53a.75.75 0 0 1 0-1.06"/></svg>',
   };
 
   const STYLE = `
@@ -16,73 +22,47 @@
     html .main-nowPlayingBar-extraControls button:is([data-testid="dj-button"], [data-testid="dj-jump-button"], :has(svg path[d^="M7.813 14.497"])):not(#djx-button) {
       display: none !important;
     }
-    /* Our persistent DJ button, positioned left of the lyrics button with native hover scale */
+    /* Persistent DJ button inherits Spotify's native extraControls / Spicy Lyrics hover behaviour */
     #djx-button {
-      background: transparent !important;
-      border: 0 !important;
-      width: 32px !important;
-      height: 32px !important;
-      min-width: 32px !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      border-radius: 50% !important;
-      color: #b3b3b3 !important;
-      cursor: pointer !important;
-      transition: transform 0.15s cubic-bezier(0.3, 0, 0, 1), color 0.15s cubic-bezier(0.3, 0, 0, 1) !important;
-      vertical-align: middle !important;
+      flex-shrink: 0;
+      padding: 0;
+      width: 32px;
+      height: 32px;
+      min-width: 32px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+      border: 0;
+      color: var(--text-subdued, rgba(var(--spice-rgb-text, 255, 255, 255), 0.7));
+      cursor: pointer;
+    }
+    #djx-button .Wrapper-sm-only {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
     }
     #djx-button svg {
-      color: inherit !important;
-      transition: inherit !important;
+      color: inherit;
+      fill: currentColor;
+      pointer-events: none;
     }
-    #djx-button:hover {
-      color: #ffffff !important;
-      transform: scale(1.08) !important;
+    #djx-button:hover,
+    #djx-button:focus-visible {
+      color: var(--text-base, var(--spice-text, #ffffff));
     }
-    /* While the sheet is open the icon carries DJ's own accent green. */
+    /* While a DJ set is playing the icon carries DJ's own accent green. */
     #djx-button.djx-active,
     #djx-button.djx-active:hover {
-      color: var(--djx-accent, #19E68C) !important;
+      color: var(--djx-accent, #19E68C);
     }
-    #djx-button:active {
-      transform: scale(0.96) !important;
+    @keyframes djx-btn-pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.45; }
     }
-    /* The like button Spotify drops from the player bar while a DJ set is playing. Same shape,
-       spacing and hover behaviour as the controls around it. */
-    #djx-like-button {
-      background: transparent !important;
-      border: 0 !important;
-      width: 32px !important;
-      height: 32px !important;
-      min-width: 32px !important;
-      display: inline-flex !important;
-      align-items: center !important;
-      justify-content: center !important;
-      padding: 0 !important;
-      margin-left: 0 !important;
-      border-radius: 50% !important;
-      color: #b3b3b3 !important;
-      cursor: pointer !important;
-      transition: transform 0.15s cubic-bezier(0.3, 0, 0, 1), color 0.15s cubic-bezier(0.3, 0, 0, 1) !important;
-      vertical-align: middle !important;
-    }
-    #djx-like-button svg {
-      color: inherit !important;
-      transition: inherit !important;
-    }
-    #djx-like-button:hover {
-      color: #ffffff !important;
-      transform: scale(1.08) !important;
-    }
-    #djx-like-button:active {
-      transform: scale(0.96) !important;
-    }
-    /* Liked tracks get Spotify's own accent, the same green its stock button uses. */
-    #djx-like-button.djx-liked,
-    #djx-like-button.djx-liked:hover {
-      color: var(--text-bright-accent, #1ed760) !important;
+    #djx-button.djx-pending svg {
+      animation: djx-btn-pulse 1.1s ease-in-out infinite;
     }
     /* Popup panel with smooth slide-up entrance and fade */
     #djx-panel {
@@ -313,10 +293,325 @@
     .djx-submit:active {
       transform: scale(0.96);
     }
+    /* Native Spotify-styled right-click menu on the DJ button */
+    #djx-context-menu {
+      position: fixed;
+      z-index: 2100;
+      min-width: 248px;
+      max-width: 300px;
+      padding: 4px;
+      border-radius: 4px;
+      background: var(--background-elevated-base, #282828);
+      color: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 16px 24px rgba(0, 0, 0, 0.3), 0 6px 8px rgba(0, 0, 0, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      font-family: inherit;
+    }
+    #djx-context-menu ul {
+      list-style: none;
+      margin: 0;
+      padding: 0;
+    }
+    .djx-ctx-item {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 2px;
+      background: transparent;
+      color: hsla(0, 0%, 100%, 0.9);
+      font: inherit;
+      font-size: 14px;
+      line-height: 20px;
+      text-align: left;
+      cursor: pointer;
+    }
+    .djx-ctx-item:hover,
+    .djx-ctx-item:focus-visible {
+      background: hsla(0, 0%, 100%, 0.1);
+      color: #ffffff;
+      outline: none;
+    }
+    .djx-ctx-item svg {
+      flex: 0 0 auto;
+      color: rgba(255, 255, 255, 0.7);
+    }
+    .djx-ctx-item:hover svg,
+    .djx-ctx-item:focus-visible svg {
+      color: #ffffff;
+    }
+    .djx-ctx-text {
+      display: flex;
+      flex-direction: column;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .djx-ctx-label {
+      font-weight: 400;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .djx-ctx-sub {
+      font-size: 12px;
+      line-height: 16px;
+      color: var(--text-subdued, #a7a7a7);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    /* Modal dialog for Pick your DJ, DJ commentary, and Restart confirmation */
+    #djx-modal-backdrop {
+      position: fixed;
+      inset: 0;
+      z-index: 2200;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 24px;
+      background: rgba(0, 0, 0, 0);
+      transition: background-color 0.16s ease;
+    }
+    #djx-modal-backdrop.djx-visible {
+      background: rgba(0, 0, 0, 0.72);
+    }
+    #djx-modal {
+      position: relative;
+      display: flex;
+      flex-direction: column;
+      width: min(460px, calc(100vw - 32px));
+      max-height: min(640px, calc(100vh - 48px));
+      border-radius: 8px;
+      background: var(--background-elevated-base, #282828);
+      color: #ffffff;
+      box-shadow: 0 24px 48px rgba(0, 0, 0, 0.55);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      overflow: hidden;
+      font-family: inherit;
+      opacity: 0;
+      transform: translateY(8px) scale(0.985);
+      transition: transform 0.16s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.12s ease;
+    }
+    #djx-modal-backdrop.djx-visible #djx-modal {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+    .djx-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 20px 24px 12px;
+      flex: 0 0 auto;
+    }
+    .djx-modal-title {
+      margin: 0;
+      font-size: 20px;
+      font-weight: 700;
+      line-height: 26px;
+      letter-spacing: -0.02em;
+      color: #ffffff;
+    }
+    .djx-modal-close {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: transparent;
+      color: rgba(255, 255, 255, 0.7);
+      cursor: pointer;
+    }
+    .djx-modal-close:hover,
+    .djx-modal-close:focus-visible {
+      background: rgba(255, 255, 255, 0.1);
+      color: #ffffff;
+      outline: none;
+    }
+    .djx-modal-subtitle {
+      margin: 0;
+      padding: 0 24px 14px;
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--text-subdued, #b3b3b3);
+      flex: 0 0 auto;
+    }
+    .djx-modal-body {
+      overflow-y: auto;
+      padding: 0 12px 20px;
+      flex: 1 1 auto;
+    }
+    .djx-modal-body::-webkit-scrollbar {
+      width: 8px;
+    }
+    .djx-modal-body::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.2);
+      border-radius: 99px;
+    }
+    .djx-lang-heading {
+      margin: 14px 12px 6px;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 20px;
+      color: #ffffff;
+    }
+    .djx-lang-group:first-child .djx-lang-heading {
+      margin-top: 4px;
+    }
+    .djx-option-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      padding: 10px 12px;
+      border: 0;
+      border-radius: 6px;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+      transition: background 0.12s ease;
+    }
+    .djx-option-row:hover,
+    .djx-option-row:focus-visible {
+      background: rgba(255, 255, 255, 0.08);
+      outline: none;
+    }
+    .djx-preview-btn {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 32px;
+      height: 32px;
+      padding: 0;
+      border: 0;
+      border-radius: 50%;
+      background: #ffffff;
+      color: #000000;
+      cursor: pointer;
+      transition: transform 0.1s ease, background 0.12s ease;
+    }
+    .djx-preview-btn:hover {
+      transform: scale(1.06);
+    }
+    .djx-preview-btn:active {
+      transform: scale(0.96);
+    }
+    .djx-preview-btn.djx-playing {
+      background: #1ed760;
+      color: #000000;
+    }
+    .djx-option-select {
+      flex: 1 1 auto;
+      min-width: 0;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 0;
+      border: 0;
+      background: transparent;
+      color: inherit;
+      font: inherit;
+      text-align: left;
+      cursor: pointer;
+    }
+    .djx-option-select:focus-visible {
+      outline: none;
+    }
+    .djx-option-copy {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      min-width: 0;
+      flex: 1 1 auto;
+    }
+    .djx-option-title {
+      font-size: 15px;
+      font-weight: 500;
+      line-height: 20px;
+      color: #ffffff;
+    }
+    .djx-option-desc {
+      font-size: 13px;
+      line-height: 18px;
+      color: var(--text-subdued, #b3b3b3);
+    }
+    .djx-option-check {
+      flex: 0 0 auto;
+      width: 20px;
+      height: 20px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      color: #1ed760;
+      opacity: 0;
+    }
+    .djx-option-row.djx-selected .djx-option-check {
+      opacity: 1;
+    }
+    #djx-modal.djx-confirm-modal {
+      width: min(380px, calc(100vw - 32px));
+    }
+    .djx-confirm-copy {
+      margin: 0;
+      padding: 0 24px 20px;
+      font-size: 14px;
+      line-height: 20px;
+      color: var(--text-subdued, #b3b3b3);
+    }
+    .djx-confirm-actions {
+      display: flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 12px;
+      padding: 0 24px 20px;
+    }
+    .djx-btn-secondary {
+      height: 36px;
+      padding: 0 18px;
+      border: 0;
+      border-radius: 999px;
+      background: transparent;
+      color: #ffffff;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .djx-btn-secondary:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+    .djx-btn-primary {
+      height: 36px;
+      padding: 0 22px;
+      border: 0;
+      border-radius: 999px;
+      background: #ffffff;
+      color: #000000;
+      font: inherit;
+      font-size: 14px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+    .djx-btn-primary:hover {
+      transform: scale(1.03);
+      background: #f0f0f0;
+    }
     @media (prefers-reduced-motion: reduce) {
-      #djx-panel, #djx-panel.djx-closing, #djx-button, .djx-pick, .djx-suggest, .djx-submit {
+      #djx-panel, #djx-panel.djx-closing, #djx-button, #djx-button.djx-pending svg,
+      #djx-modal-backdrop, #djx-modal, .djx-pick, .djx-suggest, .djx-submit,
+      .djx-preview-btn, .djx-btn-primary {
         transition: none !important;
         transform: none !important;
+        animation: none !important;
       }
       #djx-panel .djx-bar {
         animation: none !important;

@@ -8,8 +8,22 @@
     if (window.DJX) return;
 
     const client = createClient(sp);
-    const state = { draft: "", pending: 0, lastError: null, lastRequestId: null };
+    const suggestionCache = new Map();
+    const cachedSettings = normalizeDJSettings(sp.Platform.ProductStateAPI?.getCachedValues?.());
+    const state = {
+      draft: "",
+      pending: 0,
+      lastError: null,
+      lastRequestId: null,
+      personaId: cachedSettings.personaId,
+      commentary: cachedSettings.commentary,
+      history: [],
+      historyIndex: -1,
+      historyDraft: "",
+    };
     let view;
+    let closeContextMenu = () => {};
+    let closeModal = () => {};
 
     const style = document.createElement("style");
     style.id = "djx-style";
@@ -36,6 +50,20 @@
       for (const [name, value] of Object.entries(palette)) view.root.style.setProperty(`--djx-${name}`, value);
     }
 
+    function syncPendingState() {
+      const button = document.getElementById("djx-button");
+      if (button) button.classList.toggle("djx-pending", state.pending > 0);
+    }
+
+    function syncPanelSettings() {
+      if (!view) return;
+      const persona = findPersona(state.personaId);
+      if (view.hero) view.hero.textContent = persona.interactivityTitle;
+      if (view.input) {
+        view.input.placeholder = `Enter a request in this language: ${persona.languageDisplayName || "English"}`;
+      }
+    }
+
     function close() {
       const current = view;
       if (!current || current.closing) return;
@@ -51,6 +79,7 @@
 
     function dispatch(action) {
       state.pending++;
+      syncPendingState();
       state.lastError = null;
       state.lastRequestId = null;
       Promise.resolve().then(() => action())
@@ -61,7 +90,10 @@
           state.lastError = failure.code;
           sp.showNotification?.(failure.message, true);
         })
-        .finally(() => { state.pending--; });
+        .finally(() => {
+          state.pending--;
+          syncPendingState();
+        });
     }
 
     // Placeholder cards for the moment before the backend answers, exactly like the phone.
@@ -75,33 +107,78 @@
       });
     }
 
+    function clearDynamicCards(row) {
+      for (const node of [...row.querySelectorAll(".djx-skeleton, .djx-suggest")]) node.remove();
+    }
+
+    function renderSuggestions(row, prompts) {
+      clearDynamicCards(row);
+      for (const text of prompts) {
+        const card = document.createElement("button");
+        card.type = "button";
+        card.className = "djx-suggest";
+        card.textContent = text;
+        card.addEventListener("click", () => submit(text));
+        row.append(card);
+      }
+    }
+
     // Suggestion cards are the same server-side ideas the phone shows: fetched for the
-    // track that is playing right now, and dropped if playback moved on meanwhile.
+    // track that is playing right now, and cached briefly in memory per track.
     function loadSuggestions() {
       const current = view;
-      const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri;
+      if (!current || current.closing) return;
+      const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+      current.trackUri = track;
+      clearDynamicCards(current.cards);
+
+      if (track && suggestionCache.has(track)) {
+        renderSuggestions(current.cards, suggestionCache.get(track));
+        return;
+      }
+
       const skeletons = skeletonCards();
       current.cards.append(...skeletons);
-      const clear = () => { for (const card of skeletons) card.remove(); };
       fetchSuggestedPrompts(sp).then((prompts) => {
-        clear();
-        if (!view || view !== current || current.closing) return;
-        if (sp.Platform.PlayerAPI.getState?.()?.item?.uri !== track) return;
-        for (const text of prompts) {
-          const card = document.createElement("button");
-          card.type = "button";
-          card.className = "djx-suggest";
-          card.textContent = text;
-          card.addEventListener("click", () => submit(text));
-          current.cards.append(card);
+        if (!view || view !== current || current.closing) {
+          for (const card of skeletons) card.remove();
+          return;
         }
-      }).catch(clear);
+        if ((sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "") !== track) {
+          for (const card of skeletons) card.remove();
+          return;
+        }
+        if (track && prompts.length) {
+          if (suggestionCache.size >= 12) suggestionCache.delete(suggestionCache.keys().next().value);
+          suggestionCache.set(track, prompts);
+        }
+        renderSuggestions(current.cards, prompts);
+      }).catch(() => {
+        for (const card of skeletons) card.remove();
+      });
+    }
+
+    function syncPanelTrack() {
+      if (!view || view.closing) return;
+      applyPalette();
+      const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+      if (track && track !== view.trackUri) loadSuggestions();
+    }
+
+    function pushHistory(prompt) {
+      if (state.history[state.history.length - 1] !== prompt) {
+        state.history.push(prompt);
+        if (state.history.length > 20) state.history.shift();
+      }
+      state.historyIndex = -1;
+      state.historyDraft = "";
     }
 
     function submit(value) {
       if (!view || view.closing) return;
       let prompt;
       try { prompt = normalizePrompt(value ?? view.input.value); } catch { view.input.focus(); return; }
+      pushHistory(prompt);
       state.draft = "";
       view.input.value = "";
       dispatch(() => client.request(prompt));
@@ -112,12 +189,16 @@
     function pick() {
       if (!view || view.closing) return;
       state.draft = "";
+      state.historyIndex = -1;
+      state.historyDraft = "";
       view.input.value = "";
       dispatch(() => client.letDJPick());
       close();
     }
 
     function open() {
+      closeContextMenu();
+      closeModal();
       if (view) {
         if (view.closing) {
           view.closing = false;
@@ -132,10 +213,10 @@
       const root = document.createElement("section");
       root.id = "djx-panel";
       root.setAttribute("role", "dialog");
-      root.setAttribute("aria-label", "DJ X");
+      root.setAttribute("aria-label", "DJ");
       root.innerHTML = `
         <div class="djx-top">
-          <h1 class="djx-hero">Your DJ X here. What can I play for you?</h1>
+          <h1 class="djx-hero"></h1>
           <div class="djx-cards">
             <button type="button" class="djx-pick" aria-label="Let DJ pick">
               ${ICONS.pick}
@@ -144,28 +225,61 @@
           </div>
         </div>
         <form class="djx-form">
-          <input class="djx-input" type="text" maxlength="${MAX_PROMPT}" autocomplete="off"
-            placeholder="Enter a request in this language: English" aria-label="Your DJ X request">
+          <input class="djx-input" type="text" maxlength="${MAX_PROMPT}" autocomplete="off" aria-label="Your DJ request">
           <button type="submit" class="djx-submit" aria-label="Send request">${ICONS.send}</button>
         </form>
       `;
       view = {
         root,
+        hero: root.querySelector(".djx-hero"),
         cards: root.querySelector(".djx-cards"),
         pick: root.querySelector(".djx-pick"),
         form: root.querySelector(".djx-form"),
         input: root.querySelector(".djx-input"),
         dismiss: new AbortController(),
         closing: false,
+        trackUri: "",
       };
+      syncPanelSettings();
       view.pick.addEventListener("click", pick);
       view.form.addEventListener("submit", (event) => { event.preventDefault(); submit(); });
       view.input.value = state.draft;
-      view.input.addEventListener("input", (event) => { state.draft = event.target.value; });
+      view.input.addEventListener("input", (event) => {
+        state.draft = event.target.value;
+        state.historyIndex = -1;
+      });
       view.input.addEventListener("keydown", (event) => {
         if (event.key === "Enter" && !event.isComposing) {
           event.preventDefault();
           submit();
+          return;
+        }
+        if (event.key === "ArrowUp" && state.history.length) {
+          event.preventDefault();
+          if (state.historyIndex === -1) {
+            state.historyDraft = view.input.value;
+            state.historyIndex = state.history.length - 1;
+          } else if (state.historyIndex > 0) {
+            state.historyIndex--;
+          }
+          view.input.value = state.history[state.historyIndex];
+          state.draft = view.input.value;
+          const end = view.input.value.length;
+          view.input.setSelectionRange?.(end, end);
+          return;
+        }
+        if (event.key === "ArrowDown" && state.historyIndex !== -1) {
+          event.preventDefault();
+          if (state.historyIndex < state.history.length - 1) {
+            state.historyIndex++;
+            view.input.value = state.history[state.historyIndex];
+          } else {
+            state.historyIndex = -1;
+            view.input.value = state.historyDraft;
+          }
+          state.draft = view.input.value;
+          const end = view.input.value.length;
+          view.input.setSelectionRange?.(end, end);
         }
       });
       // Prevent Spotify global shortcuts while typing in the popup. Shift + D is let through so
@@ -186,3 +300,86 @@
         } else if (!event.shiftKey && document.activeElement === last) {
           event.preventDefault();
           first.focus();
+        }
+      }, { signal: view.dismiss.signal });
+
+      const signal = view.dismiss.signal;
+      // Every resting position must be a card start, otherwise the card at the left edge is
+      // chopped mid-word. Stops are the cards' offsets inside the row, clamped to the scroll range.
+      const stopsOf = (row) => {
+        const max = Math.max(0, row.scrollWidth - row.clientWidth);
+        const rowLeft = row.getBoundingClientRect().left;
+        return [...row.children].map((card) =>
+          Math.min(card.getBoundingClientRect().left - rowLeft + row.scrollLeft, max));
+      };
+      // A safety net for scrolling this panel did not drive itself (drag, assistive tech).
+      let alignTimer;
+      const alignRow = () => {
+        const row = view?.cards;
+        if (!row) return;
+        const stops = stopsOf(row);
+        if (!stops.length) return;
+        const target = stops.reduce((best, stop) =>
+          (Math.abs(stop - row.scrollLeft) < Math.abs(best - row.scrollLeft) ? stop : best), stops[0]);
+        if (Math.abs(target - row.scrollLeft) > 0.5) row.scrollTo({ left: target, behavior: "smooth" });
+      };
+      view.cards.addEventListener("scroll", () => {
+        clearTimeout(alignTimer);
+        alignTimer = setTimeout(alignRow, 160);
+      }, { signal });
+
+      // One wheel notch or horizontal trackpad swipe advances a whole view: stops on a card start,
+      // and nothing behind the popup moves.
+      let wheelDelta = 0;
+      let wheelLock = 0;
+      view.cards.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        const row = view.cards;
+        const delta = Math.abs(event.deltaX) > Math.abs(event.deltaY) ? event.deltaX : event.deltaY;
+        wheelDelta += delta;
+        const now = Date.now();
+        if (now < wheelLock || Math.abs(wheelDelta) < 30) return;
+        const forward = wheelDelta > 0;
+        wheelDelta = 0;
+        wheelLock = now + 180;
+        const stops = [...new Set(stopsOf(row))].sort((a, b) => a - b);
+        if (!stops.length) return;
+        const max = Math.max(0, row.scrollWidth - row.clientWidth);
+        const at = row.scrollLeft;
+        const reach = row.clientWidth;
+        const target = forward
+          ? (stops.filter((stop) => stop > at + 1 && stop <= at + reach).pop() ?? max)
+          : ([...stops].filter((stop) => stop < at - 1 && stop >= at - reach).shift() ?? 0);
+        if (Math.abs(target - at) < 1) return;
+        row.scrollTo({ left: target, behavior: "smooth" });
+      }, { passive: false, signal });
+      root.addEventListener("wheel", (event) => {
+        event.preventDefault();
+        event.stopPropagation();
+      }, { passive: false, signal });
+      document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); }, { capture: true, signal });
+      document.addEventListener("click", (event) => {
+        if (!view || view.closing) return;
+        if (view.root.contains(event.target) || event.target.closest?.("#djx-button")) return;
+        close();
+      }, { capture: true, signal });
+      window.addEventListener("resize", () => { if (view && !view.closing) place(view.root); }, { signal });
+
+      const playerBar = document.querySelector(".main-nowPlayingBar-container");
+      if (playerBar && typeof ResizeObserver === "function") {
+        const ro = new ResizeObserver(() => { if (view && !view.closing) place(view.root); });
+        ro.observe(playerBar);
+        signal.addEventListener("abort", () => ro.disconnect(), { once: true });
+      }
+
+      document.body.append(root);
+      place(root);
+      applyPalette();
+      loadSuggestions();
+
+      // Trigger smooth entrance animation
+      void root.offsetWidth;
+      root.classList.add("djx-visible");
+      view.input.focus();
+      syncDJSettings().then(syncPanelSettings).catch(() => {});
+    }

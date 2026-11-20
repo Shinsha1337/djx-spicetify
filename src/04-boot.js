@@ -1,131 +1,82 @@
-        }
-      }, { signal: view.dismiss.signal });
-
-      const signal = view.dismiss.signal;
-      // Every resting position must be a card start, otherwise the card at the left edge is
-      // chopped mid-word. Stops are the cards' offsets inside the row, clamped to the scroll range.
-      const stopsOf = (row) => {
-        const max = Math.max(0, row.scrollWidth - row.clientWidth);
-        const rowLeft = row.getBoundingClientRect().left;
-        return [...row.children].map((card) =>
-          Math.min(card.getBoundingClientRect().left - rowLeft + row.scrollLeft, max));
-      };
-      // A safety net for scrolling this panel did not drive itself (drag, assistive tech).
-      let alignTimer;
-      const alignRow = () => {
-        const row = view?.cards;
-        if (!row) return;
-        const stops = stopsOf(row);
-        if (!stops.length) return;
-        const target = stops.reduce((best, stop) =>
-          (Math.abs(stop - row.scrollLeft) < Math.abs(best - row.scrollLeft) ? stop : best), stops[0]);
-        if (Math.abs(target - row.scrollLeft) > 0.5) row.scrollTo({ left: target, behavior: "smooth" });
-      };
-      view.cards.addEventListener("scroll", () => {
-        clearTimeout(alignTimer);
-        alignTimer = setTimeout(alignRow, 160);
-      }, { signal });
-
-      // One wheel notch advances a whole view: a plain wheel scrolls the row sideways, lands on
-      // a card start, and nothing behind the popup moves. Trackpads emit many small deltas, so
-      // they are accumulated and rate-limited into the same page steps.
-      let wheelDelta = 0;
-      let wheelLock = 0;
-      view.cards.addEventListener("wheel", (event) => {
-        event.preventDefault();
-        const row = view.cards;
-        wheelDelta += event.deltaY;
-        const now = Date.now();
-        if (now < wheelLock || Math.abs(wheelDelta) < 30) return;
-        const forward = wheelDelta > 0;
-        wheelDelta = 0;
-        wheelLock = now + 180;
-        const stops = [...new Set(stopsOf(row))].sort((a, b) => a - b);
-        if (!stops.length) return;
-        const max = Math.max(0, row.scrollWidth - row.clientWidth);
-        const at = row.scrollLeft;
-        const reach = row.clientWidth;
-        // One notch advances a whole view: the furthest card start that still fits on screen, so a
-        // single notch already shows the next pair of cards instead of stepping one card at a time.
-        const target = forward
-          ? (stops.filter((stop) => stop > at + 1 && stop <= at + reach).pop() ?? max)
-          : ([...stops].filter((stop) => stop < at - 1 && stop >= at - reach).shift() ?? 0);
-        if (Math.abs(target - at) < 1) return;
-        row.scrollTo({ left: target, behavior: "smooth" });
-      }, { passive: false, signal });
-      root.addEventListener("wheel", (event) => {
-        event.preventDefault();
-        event.stopPropagation();
-      }, { passive: false, signal });
-      document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); }, { capture: true, signal });
-      document.addEventListener("click", (event) => {
-        if (!view || view.closing) return;
-        if (view.root.contains(event.target) || event.target.closest?.("#djx-button")) return;
-        close();
-      }, { capture: true, signal });
-      window.addEventListener("resize", () => { if (view && !view.closing) place(view.root); }, { signal });
-
-      document.body.append(root);
-      place(root);
-      applyPalette();
-      loadSuggestions();
-
-      // Trigger smooth entrance animation
-      void root.offsetWidth;
-      root.classList.add("djx-visible");
-      view.input.focus();
-    }
-
     function toggle() {
       if (view && !view.closing) close();
       else open();
+    }
+
+    const FALLBACK_BTN_CLASS = "main-genericButton-button e-101111-legacy-button e-101111-legacy-button-tertiary e-101111-overflow-wrap-anywhere e-101111-button-tertiary--icon-only-small e-101111-button-tertiary--icon-only e-101111-button-tertiary--text-subdued encore-internal-color-text-subdued";
+
+    function nativeButtonClasses(bar) {
+      const sibling = bar.querySelector('button[data-testid="lyrics-button"], button.main-genericButton-button:not(#djx-button)');
+      if (!sibling?.className) return FALLBACK_BTN_CLASS;
+      const kept = sibling.className
+        .split(/\s+/)
+        .filter((cls) => cls && !cls.endsWith("-active") && !/^djx-/i.test(cls) && !/^SpicyLyrics/i.test(cls));
+      if (!kept.includes("main-genericButton-button")) kept.unshift("main-genericButton-button");
+      return kept.join(" ") || FALLBACK_BTN_CLASS;
     }
 
     // Mount our persistent button into .main-nowPlayingBar-extraControls to the left of lyrics
     function mountButton() {
       const bar = document.querySelector(".main-nowPlayingBar-extraControls");
       if (!bar) return;
+      const lyrics = bar.querySelector('button[data-testid="lyrics-button"]');
       let button = document.getElementById("djx-button");
       if (!button) {
         button = document.createElement("button");
         button.id = "djx-button";
         button.type = "button";
-        button.className = "e-10860-legacy-button e-10860-legacy-button-tertiary e-10860-overflow-wrap-anywhere e-10860-button-tertiary--icon-only-small e-10860-button-tertiary--icon-only e-10860-button-tertiary--text-subdued encore-internal-color-text-subdued";
+        button.className = nativeButtonClasses(bar);
         button.setAttribute("aria-label", "DJ");
-        button.innerHTML = ICONS.dj;
-        button.addEventListener("click", (event) => {
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          toggle();
-        });
+        button.setAttribute("aria-haspopup", "menu");
+        button.innerHTML = `<span aria-hidden="true" class="Wrapper-sm-only Wrapper-small-only">${ICONS.dj}</span>`;
+        if (lyrics) button.dataset.djxStyled = "1";
+        let tippyInstance = null;
         if (typeof sp.Tippy === "function") {
-          sp.Tippy(button, {
+          tippyInstance = sp.Tippy(button, {
             allowHTML: true,
             content: tooltip("DJ"),
             animation: "fade",
             delay: [200, 0],
           });
         }
+        button.addEventListener("click", (event) => {
+          event.preventDefault();
+          event.stopImmediatePropagation();
+          tippyInstance?.hide?.();
+          toggle();
+        });
+        button.addEventListener("contextmenu", (event) => {
+          tippyInstance?.hide?.();
+          openContextMenu(button, event);
+        });
+      } else if (button.dataset.djxStyled !== "1") {
+        const cls = nativeButtonClasses(bar);
+        const keepActive = button.classList.contains("djx-active");
+        const keepPending = button.classList.contains("djx-pending");
+        button.className = cls;
+        if (keepActive) button.classList.add("djx-active");
+        if (keepPending) button.classList.add("djx-pending");
+        if (lyrics) button.dataset.djxStyled = "1";
       }
-      const lyrics = bar.querySelector('button[data-testid="lyrics-button"]');
+
       if (lyrics && lyrics.parentElement === bar) {
         if (button.nextElementSibling !== lyrics) lyrics.before(button);
       } else if (button.parentElement !== bar) {
         bar.prepend(button);
       }
+      syncPendingState();
     }
 
-    // The icon carries DJ's accent green while a DJ set is playing — not while the sheet is open,
-    // so it reads as "DJ is on air" at a glance. Driven by the same body observer that keeps the
-    // button mounted, which fires constantly during playback.
+    // The icon carries DJ's accent green while a DJ set is playing — so it reads as
+    // "DJ is on air" at a glance.
     function syncDjOnAir() {
       const button = document.getElementById("djx-button");
       if (!button) return;
-      const state = sp.Platform.PlayerAPI.getState?.();
+      const stateSnapshot = sp.Platform.PlayerAPI.getState?.();
       // A snapshot taken mid-switch has no context; keep the previous reading instead of flickering.
-      if (!state?.context?.uri) return;
-      button.style.setProperty("--djx-accent", djPalette(state.context.metadata).accent);
-      button.classList.toggle("djx-active", isDJ(state));
+      if (!stateSnapshot?.context?.uri) return;
+      button.style.setProperty("--djx-accent", djPalette(stateSnapshot.context.metadata).accent);
+      button.classList.toggle("djx-active", isDJ(stateSnapshot));
     }
 
     function tooltip(text) {
@@ -133,49 +84,31 @@
         + text + "</span></div></div>";
     }
 
-    // Unblock Spotify's native track curation / like button while DJ is playing.
-    // Spotify's NowPlayingPositiveAction component (module 40550) wraps the native CurationButton
-    // (module 51608) in a DJ check `let { isYourDJContext } = useYourDJContext(); return isYourDJContext ? null : ...`.
-    // By pointing NowPlayingPositiveAction directly to CurationButton, Spotify renders the 100% native
-    // curation button with native tooltips, the green checkmark state, and the multi-playlist sheet popover,
-    // with zero DOM manipulation, zero custom SVGs, and zero React hook corruption.
-    function unblockNativeCuration() {
-      try {
-        let requireFn = null;
-        window.rspackChunk?.push?.([
-          [Symbol()],
-          {},
-          (req) => { requireFn = req; }
-        ]);
-        if (!requireFn) return;
-        const exp40550 = requireFn(40550);
-        const exp51608 = requireFn(51608);
-        const CurationButton = exp51608?.v;
-        if (!exp40550?.c || !CurationButton || exp40550.c.__djx_unblocked) return;
-
-        const NativeCuration = function(props) {
-          return sp.React.createElement(CurationButton, props);
-        };
-        exp40550.c.type = NativeCuration;
-        exp40550.c.__djx_unblocked = true;
-
-        const el = document.querySelector('.KMxCDV77Kb3sbuKtkwpw');
-        const fiberKey = el ? Object.keys(el).find(k => k.startsWith('__reactFiber$')) : null;
-        const slotFiber = fiberKey ? el[fiberKey] : null;
-        const nccFiber = slotFiber?.child?.sibling;
-        if (nccFiber) nccFiber.type = NativeCuration;
-      } catch { /* graceful fallback */ }
+    function ensureButtonMounted() {
+      const btn = document.getElementById("djx-button");
+      const bar = btn?.parentElement?.classList?.contains("main-nowPlayingBar-extraControls")
+        ? btn.parentElement
+        : document.querySelector(".main-nowPlayingBar-extraControls");
+      if (!bar) return;
+      const lyrics = bar.querySelector('button[data-testid="lyrics-button"]');
+      if (!btn || btn.parentElement !== bar || btn.dataset.djxStyled !== "1"
+        || (lyrics && btn.nextElementSibling !== lyrics)) {
+        mountButton();
+        syncDjOnAir();
+      }
     }
 
-    // Keep the button present and mounted across all React re-renders, track changes and narration
-    new MutationObserver(() => {
-      mountButton();
+    new MutationObserver(ensureButtonMounted).observe(document.body, { childList: true, subtree: true });
+    sp.Platform.PlayerAPI.getEvents?.()?.addListener?.("update", () => {
       syncDjOnAir();
-      unblockNativeCuration();
-    }).observe(document.body, { childList: true, subtree: true });
+      syncPanelTrack();
+    });
+    sp.Platform.ProductStateAPI?.getEvents?.()?.addListener?.("update", () => {
+      void syncDJSettings();
+    });
     mountButton();
     syncDjOnAir();
-    unblockNativeCuration();
+    void syncDJSettings();
 
     // Intercept clicks on Spotify's native DJ button if it receives clicks
     document.addEventListener("click", (event) => {
@@ -200,8 +133,19 @@
     });
 
     window.DJX = Object.freeze({
-      version: VERSION, open, close, toggle,
-      getStatus: () => ({ pending: state.pending, lastError: state.lastError, lastRequestId: state.lastRequestId }),
+      version: VERSION,
+      open,
+      close,
+      toggle,
+      openVoicePicker,
+      openCommentarySettings,
+      getStatus: () => ({
+        pending: state.pending,
+        lastError: state.lastError,
+        lastRequestId: state.lastRequestId,
+        personaId: state.personaId,
+        commentary: state.commentary,
+      }),
     });
     console.info(`[DJX] ${VERSION} loaded`);
   }

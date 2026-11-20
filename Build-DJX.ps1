@@ -37,7 +37,22 @@ Write-Host ("Built djx.js  ({0} bytes)" -f (Get-Item $output).Length)
 
 if ($NoInstall) { return }
 
-$extensions = Join-Path $env:APPDATA "spicetify\Extensions"
+# Resolve canonical Spicetify Extensions path (Local on modern Spicetify) and purge any Roaming duplicate.
+$extensions = $null
+try {
+    $resolved = (spicetify path -e root 2>$null | Select-Object -First 1)
+    if ($resolved) { $extensions = $resolved.Trim() }
+} catch {}
+if (-not $extensions) {
+    $extensions = Join-Path $env:LOCALAPPDATA "spicetify\Extensions"
+}
+
+$roamingDup = Join-Path $env:APPDATA "spicetify\Extensions\djx.js"
+if ($roamingDup -and (Test-Path $roamingDup) -and ((Split-Path -Parent $roamingDup) -ne $extensions)) {
+    Remove-Item $roamingDup -Force -ErrorAction SilentlyContinue
+    Write-Host "Removed duplicate Roaming copy at $roamingDup"
+}
+
 if (-not (Test-Path $extensions)) {
     Write-Warning "Spicetify Extensions folder not found at $extensions - skipping copy."
     return

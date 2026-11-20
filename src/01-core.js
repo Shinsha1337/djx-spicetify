@@ -11,6 +11,8 @@
   const DJ_IDS = new Set([
     "37i9dQZF1EYkqdzj48dyYq", "37i9dQZF1EYkqdzj8OSOas", "37i9dQZF1EYkqdzjdvy3mw",
     "37i9dQZF1EYkqdzjicdiyA", "37i9dQZF1EYkqdzjmSSxKE", "37i9dQZF1EYkqdzjrzxMWI",
+    "37i9dQZF1EYkqdzjwgd28M", "37i9dQZF1EYkqdzjAWShkQ", "37i9dQZF1EYkqdzjFDxwwU",
+    "37i9dQZF1EYkqdzjKkcLIY", "37i9dQZF1EYkqdzjP0S0V2", "37i9dQZF1EYkqdzjTHxg76",
   ]);
   const MAX_PROMPT = 500;
   // Spotify Android reads its prompt ideas from this DJ backend method; the desktop build
@@ -19,11 +21,220 @@
     + "/spotify.dj.interactionmanager.v0.DJInteractionManagerService/GetSuggestedPrompts";
   const MAX_SUGGESTIONS = 3;
 
+  const DEFAULT_PERSONA_ID = "en-US-x";
+  const DEFAULT_COMMENTARY_MODE = "default";
+  const PRODUCT_STATE_DJ_LANGUAGE = "dj-language";
+  const PRODUCT_STATE_DJ_COMMENTARY = "dj-voice-commentary";
+
+  // Official Spotify DJ catalog (lexicon-formatlist-provider/v2/dj/available-personas).
+  const DJ_LANGUAGES = [
+    {
+      languageTag: "en",
+      displayName: "English",
+      personas: [
+        {
+          personaName: "DJ X (US)",
+          personaId: "en-US-x",
+          descriptor: "Hype, welcoming, all charisma.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-x/f3182c2af8ef3d13fb55d78e75b13b85df94de528889d44f8a58648a94fee047.mp3",
+          interactivityTitle: "Your DJ X here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Nisha (IND)",
+          personaId: "en-US-1",
+          descriptor: "Inviting and eager, infectious energy.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-1/7d6bdfbaa33d4a8addc8e87c94985e07a93456509576eaed914cfe1d718a3fc3.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Nell (UK)",
+          personaId: "en-GB-2",
+          descriptor: "Mellow, slower, deeply knowledgeable.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-2/aba0033e6b5a8ed74eab4934a08c04a5e91dccf03f5a136292c3467700fc2804.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-GB",
+        },
+        {
+          personaName: "Lane (US)",
+          personaId: "en-US-3",
+          descriptor: "Big-hearted energy, bright and spirited.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-3/8e6395b17ebe70fff64c4b5a0a3347e08f317132ceeeb0fa8d8cb8c159302f22.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Tess (US)",
+          personaId: "en-US-4",
+          descriptor: "Direct but inviting, in-the-know.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-4/5104f0af0c79df116ef47e81d696fcd40d9d0bad7ad687f5ed412888ffee10ea.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Casey (US)",
+          personaId: "en-US-5",
+          descriptor: "Laidback presence, warm and earnest.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-5/04c7af83dbd2137e006bb6a096cbf4314c59aba6071ea76c4d5f4782c10d70de.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Sam (AUS)",
+          personaId: "en-US-6",
+          descriptor: "Fun, keeps things not-so-serious.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-6/7377876ac0fcc07af9bb99a19be8452de87ecb4411d7c5af6e18c8ad038068b5.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-US",
+        },
+        {
+          personaName: "Declan (IRE)",
+          personaId: "en-GB-7",
+          descriptor: "Straightforward, passionate, bit of a music nerd.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-7/9f3178b0d3fcab5275c20231b257dd2143fdaf339500a075985912d2984fc0d3.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "en-GB",
+        },
+      ],
+    },
+    {
+      languageTag: "es",
+      displayName: "Spanish",
+      personas: [
+        {
+          personaName: "Fabi (MX)",
+          personaId: "es-MX-1",
+          descriptor: "Witty, friendly, always a step ahead.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-1/991712e0059c12bd58e1abd9001f34df68166887f31efc4a7a280ccebc11f20f.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "es-MX",
+        },
+        {
+          personaName: "Nico (MX)",
+          personaId: "es-MX-2",
+          descriptor: "Down to earth, present, right there with you.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-2/0c765c160c515bfa4560f34d04a20c612a5caeb8a8e32ee2f2cc53b01fd2a004.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "es-MX",
+        },
+      ],
+    },
+    {
+      languageTag: "de",
+      displayName: "German",
+      personas: [
+        {
+          personaName: "Ben",
+          personaId: "de-DE-z",
+          descriptor: "Effortlessly cool, tells it like it is.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/de-DE-z/24cbe5174efffd9b348320ed26e945f03676d4da6c965d91304eb33c39f28eb5.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "de-DE",
+        },
+      ],
+    },
+    {
+      languageTag: "fr",
+      displayName: "French",
+      personas: [
+        {
+          personaName: "Maia",
+          personaId: "fr-FR-a",
+          descriptor: "Understated and savvy, picks up on everything.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/fr-FR-a/52f3d68a8ec40f67c5c660a2df6905758e7534be4793ba857741d6ff75e568d0.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "fr-FR",
+        },
+      ],
+    },
+    {
+      languageTag: "pt",
+      displayName: "Portuguese",
+      personas: [
+        {
+          personaName: "Dani (BR)",
+          personaId: "pt-BR-b",
+          descriptor: "Attuned, relatable, never misses a beat.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/pt-BR-b/f7bd1ada1e8ea290f0d5889fc143eb26c88f29a3874c955743ff77b86032c5fb.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "pt-BR",
+        },
+      ],
+    },
+    {
+      languageTag: "it",
+      displayName: "Italian",
+      personas: [
+        {
+          personaName: "Alex",
+          personaId: "it-IT-c",
+          descriptor: "Eclectic, experienced, easy to trust.",
+          previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/it-IT-c/fdb337d2bccf01fb504876c0af30f3e6506b1583e5b25e389366840776d735a7.mp3",
+          interactivityTitle: "Your DJ here. What can I play for you?",
+          localeTag: "it-IT",
+        },
+      ],
+    },
+  ];
+
+  const COMMENTARY_OPTIONS = [
+    {
+      id: "default",
+      title: "Introduce each set",
+      subtitle: "DJ introduces songs, shares context and tees up music when the vibe shifts.",
+    },
+    {
+      id: "sometimes",
+      title: "Don’t break the flow",
+      subtitle: "DJ only talks when you tap the DJ button to change the vibe.",
+    },
+  ];
+
   class DJError extends Error {
     constructor(message, code = "request_failed") {
       super(message);
       this.name = "DJError";
       this.code = code;
+    }
+  }
+
+  function findPersona(personaId) {
+    for (const group of DJ_LANGUAGES) {
+      const match = group.personas.find((p) => p.personaId === personaId);
+      if (match) return { ...match, languageDisplayName: group.displayName };
+    }
+    const fallbackGroup = DJ_LANGUAGES[0];
+    return { ...fallbackGroup.personas[0], languageDisplayName: fallbackGroup.displayName };
+  }
+
+  function normalizeDJSettings(values = {}) {
+    const rawLang = values?.[PRODUCT_STATE_DJ_LANGUAGE];
+    const personaId = rawLang && rawLang !== "not-set" ? findPersona(rawLang).personaId : DEFAULT_PERSONA_ID;
+    const commentary = values?.[PRODUCT_STATE_DJ_COMMENTARY] === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+    return { personaId, commentary };
+  }
+
+  async function readDJSettings(spicetify) {
+    const ps = spicetify?.Platform?.ProductStateAPI;
+    if (!ps) return normalizeDJSettings();
+    try {
+      const values = (await ps.getValues?.()) || ps.getCachedValues?.() || {};
+      return normalizeDJSettings(values);
+    } catch {
+      return normalizeDJSettings(ps.getCachedValues?.() || {});
+    }
+  }
+
+  async function writeDJSetting(spicetify, key, value) {
+    const ps = spicetify?.Platform?.ProductStateAPI;
+    if (typeof ps?.setValues !== "function") {
+      throw new DJError("Something went wrong.", "settings_unavailable");
+    }
+    try {
+      await ps.setValues({ [key]: String(value) });
+    } catch {
+      throw new DJError("Something went wrong.", "settings_write_failed");
     }
   }
 
@@ -212,7 +423,17 @@
         throw readableError(error);
       }
     }
-    return { request, letDJPick };
+
+    async function restart() {
+      epoch++;
+      try {
+        await player.play({ uri: DJ_URI }, origin, {});
+      } catch (error) {
+        throw readableError(error);
+      }
+    }
+
+    return { request, letDJPick, restart };
   }
 
   // The player-bar DJ button has no stable id on every build; match its own test ids
@@ -248,6 +469,12 @@
 
   // A test seam for the request protocol; this branch never runs inside Spotify.
   if (typeof module !== "undefined" && module.exports) {
-    module.exports = { createClient, encodePromptSignal, normalizePrompt, isDJ, DJError, isDJButton, djPalette, PICK_PAYLOAD, encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts };
+    module.exports = {
+      createClient, encodePromptSignal, normalizePrompt, isDJ, DJError, isDJButton, djPalette,
+      PICK_PAYLOAD, encodeSuggestionRequest, decodeSuggestedPrompts, fetchSuggestedPrompts,
+      DJ_LANGUAGES, COMMENTARY_OPTIONS, DEFAULT_PERSONA_ID, DEFAULT_COMMENTARY_MODE,
+      PRODUCT_STATE_DJ_LANGUAGE, PRODUCT_STATE_DJ_COMMENTARY,
+      findPersona, normalizeDJSettings, readDJSettings, writeDJSetting,
+    };
     return;
   }

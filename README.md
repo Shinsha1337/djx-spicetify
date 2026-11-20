@@ -6,7 +6,8 @@
 
 ## Features
 
-- **Native DJ button** — sits in the player bar left of Lyrics, monochrome with Spotify's own tooltip and hover scale. It stays put while DJ narrates or a request is in flight, when Spotify's stock button disappears. While a DJ set is playing, the icon takes DJ's accent green.
+- **Native DJ button** — sits in the player bar left of Lyrics with Spotify's own Encore classes, tooltip, and hover behavior. It stays put while DJ narrates or a request is in flight, when Spotify's stock button disappears. While a DJ set is playing, the icon takes DJ's accent green.
+- **Pick your DJ & DJ commentary** — right-click the DJ button to switch DJ voice personas (6 languages, 14 voices with audio previews) or toggle **DJ commentary** (**Introduce each set** / **Don’t break the flow**) cleanly in English even in regions where the controls are hidden.
 - **Prompt ideas from Spotify** — the cards next to **Let DJ pick** are generated server-side for the track playing right now, with shimmering placeholders while they load. Nothing is hardcoded.
 - **Let DJ pick** — hands the choice to DJ with no prompt at all, the way the phone's button does, so you never get "Based on your request" narration.
 - **Phone-matched layout** — card sizes, gaps, corners and the outlined card style are measured from the mobile app, so the sheet reads as part of the client.
@@ -87,15 +88,17 @@ Click the DJ icon in the player bar or press **Shift + D** — the sheet opens a
 - **Pick a suggestion** — click any card to send it as is; the row pages with the mouse wheel.
 - **Let DJ pick** — hand the choice to DJ without describing anything.
 - **Dismiss** — click outside the sheet or press **Escape**; the draft is kept until you send it.
+- **DJ settings** — right-click the DJ icon in the player bar to open **Pick your DJ** (with voice previews) or **DJ commentary**; if a DJ session is playing when you change either setting, you can restart DJ right away or apply it on the next session.
 
 ## Development
 
 The shipped `djx.js` is a **generated bundle** — the source is modular:
 
-- `src/01-core.js` — Spotify API surface, prompt signal encoding, the suggestion backend call, the request client, palette helpers, and the test seam
+- `src/01-core.js` — Spotify API surface, DJ catalog and commentary settings (`ProductStateAPI`), prompt signal encoding, the suggestion backend call, the request client, palette helpers, and the test seam
 - `src/02-styles.js` — DJ icon paths, inline SVG icons and the whole stylesheet
-- `src/03-panel.js` — the popup itself: opening, rendering, cards, sending, closing
-- `src/04-boot.js` — player-bar button, row paging, global listeners and the public `window.DJX` handle
+- `src/03-panel.js` — the popup itself: opening, rendering, cards, caching, row paging, history, sending, closing
+- `src/03-settings.js` — the right-click context menu, **Pick your DJ** voice picker with previews, **DJ commentary** selector, and **DJ will restart** prompt
+- `src/04-boot.js` — player-bar button, player/settings listeners, global listeners and the public `window.DJX` handle
 
 Edit the modules, then run `Build-DJX.ps1` — it concatenates them in order into the single file Spicetify expects (extensions are injected as one file), copies it into your `Extensions` folder and applies. Use `-NoApply` to skip applying, or `-NoInstall` to only build.
 
