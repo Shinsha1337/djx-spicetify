@@ -18,8 +18,11 @@
 
   const STYLE = `
     /* Hide Spotify's native DJ button when it mounts/unmounts, so only our persistent button is shown */
-    html .main-nowPlayingBar-extraControls span:has(button:is([data-testid="dj-button"], [data-testid="dj-jump-button"], :has(svg path[d^="M7.813 14.497"]))),
-    html .main-nowPlayingBar-extraControls button:is([data-testid="dj-button"], [data-testid="dj-jump-button"], :has(svg path[d^="M7.813 14.497"])):not(#djx-button) {
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button)[data-testid="dj-button"]),
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button)[data-testid="dj-jump-button"]),
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button) svg path[d^="M7.813 14.497"]),
+    html .main-nowPlayingBar-extraControls button:not(#djx-button):is([data-testid="dj-button"], [data-testid="dj-jump-button"]),
+    html .main-nowPlayingBar-extraControls button:not(#djx-button):has(svg path[d^="M7.813 14.497"]) {
       display: none !important;
     }
     /* Persistent DJ button inherits Spotify's native extraControls / Spicy Lyrics hover behaviour */
@@ -191,6 +194,7 @@
       border: 0 !important;
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
       color: #b6ceea;
+      color: color-mix(in srgb, #ffffff 74%, var(--djx-background));
       font-size: 13px;
       font-weight: 500;
       line-height: 1.4;
@@ -252,6 +256,7 @@
       gap: 8px;
       padding: 10px 12px;
       background: var(--djx-tray);
+      background: color-mix(in srgb, var(--djx-background) 78%, #000000);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
     .djx-input {
@@ -479,7 +484,8 @@
       transition: background 0.12s ease;
     }
     .djx-option-row:hover,
-    .djx-option-row:focus-visible {
+    .djx-option-row:focus-visible,
+    .djx-option-row:has(.djx-option-select:focus-visible) {
       background: rgba(255, 255, 255, 0.08);
       outline: none;
     }
@@ -500,6 +506,10 @@
     }
     .djx-preview-btn:hover {
       transform: scale(1.06);
+    }
+    .djx-preview-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
     }
     .djx-preview-btn:active {
       transform: scale(0.96);
@@ -589,6 +599,10 @@
     .djx-btn-secondary:hover {
       background: rgba(255, 255, 255, 0.1);
     }
+    .djx-btn-secondary:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
     .djx-btn-primary {
       height: 36px;
       padding: 0 22px;
@@ -604,6 +618,10 @@
     .djx-btn-primary:hover {
       transform: scale(1.03);
       background: #f0f0f0;
+    }
+    .djx-btn-primary:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
     }
     @media (prefers-reduced-motion: reduce) {
       #djx-panel, #djx-panel.djx-closing, #djx-button, #djx-button.djx-pending svg,

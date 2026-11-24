@@ -7,12 +7,16 @@
 
     function nativeButtonClasses(bar) {
       const sibling = bar.querySelector('button[data-testid="lyrics-button"], button.main-genericButton-button:not(#djx-button)');
-      if (!sibling?.className) return FALLBACK_BTN_CLASS;
+      if (!sibling?.className) return { className: FALLBACK_BTN_CLASS, matched: false };
       const kept = sibling.className
         .split(/\s+/)
-        .filter((cls) => cls && !cls.endsWith("-active") && !/^djx-/i.test(cls) && !/^SpicyLyrics/i.test(cls));
+        .filter((cls) => cls
+          && !cls.endsWith("-active")
+          && !/^main-genericButton-buttonActive/i.test(cls)
+          && !/^djx-/i.test(cls)
+          && !/^SpicyLyrics/i.test(cls));
       if (!kept.includes("main-genericButton-button")) kept.unshift("main-genericButton-button");
-      return kept.join(" ") || FALLBACK_BTN_CLASS;
+      return { className: kept.join(" ") || FALLBACK_BTN_CLASS, matched: true };
     }
 
     // Mount our persistent button into .main-nowPlayingBar-extraControls to the left of lyrics
@@ -22,14 +26,15 @@
       const lyrics = bar.querySelector('button[data-testid="lyrics-button"]');
       let button = document.getElementById("djx-button");
       if (!button) {
+        const { className, matched } = nativeButtonClasses(bar);
         button = document.createElement("button");
         button.id = "djx-button";
         button.type = "button";
-        button.className = nativeButtonClasses(bar);
+        button.className = className;
         button.setAttribute("aria-label", "DJ");
         button.setAttribute("aria-haspopup", "menu");
         button.innerHTML = `<span aria-hidden="true" class="Wrapper-sm-only Wrapper-small-only">${ICONS.dj}</span>`;
-        if (lyrics) button.dataset.djxStyled = "1";
+        if (matched) button.dataset.djxStyled = "1";
         let tippyInstance = null;
         if (typeof sp.Tippy === "function") {
           tippyInstance = sp.Tippy(button, {
@@ -50,13 +55,13 @@
           openContextMenu(button, event);
         });
       } else if (button.dataset.djxStyled !== "1") {
-        const cls = nativeButtonClasses(bar);
+        const { className, matched } = nativeButtonClasses(bar);
         const keepActive = button.classList.contains("djx-active");
         const keepPending = button.classList.contains("djx-pending");
-        button.className = cls;
+        button.className = className;
         if (keepActive) button.classList.add("djx-active");
         if (keepPending) button.classList.add("djx-pending");
-        if (lyrics) button.dataset.djxStyled = "1";
+        if (matched) button.dataset.djxStyled = "1";
       }
 
       if (lyrics && lyrics.parentElement === bar) {
@@ -73,15 +78,21 @@
       const button = document.getElementById("djx-button");
       if (!button) return;
       const stateSnapshot = sp.Platform.PlayerAPI.getState?.();
-      // A snapshot taken mid-switch has no context; keep the previous reading instead of flickering.
-      if (!stateSnapshot?.context?.uri) return;
+      if (!stateSnapshot) return;
+      // A snapshot taken mid-switch has no context; keep the previous reading only while loading.
+      if (!stateSnapshot.context?.uri) {
+        if (!stateSnapshot.isBuffering && !stateSnapshot.context?.isLoading) {
+          button.classList.remove("djx-active");
+        }
+        return;
+      }
       button.style.setProperty("--djx-accent", djPalette(stateSnapshot.context.metadata).accent);
       button.classList.toggle("djx-active", isDJ(stateSnapshot));
     }
 
     function tooltip(text) {
-      return '<div id="context-menu"><div class="a_QAHZU3VTgG_kDYWmDv" style="background-color:rgb(40,40,40);color:#fff;border-radius:4px;padding:4px 8px;font-size:14px;font-weight:400;box-shadow:rgba(0,0,0,0.3) 0px 16px 24px,rgba(0,0,0,0.2) 0px 6px 8px;line-height:1.4;"><span id="hover-or-focus-tooltip" role="tooltip">'
-        + text + "</span></div></div>";
+      return '<div class="djx-tooltip" role="tooltip" style="background-color:rgb(40,40,40);color:#fff;border-radius:4px;padding:4px 8px;font-size:14px;font-weight:400;box-shadow:rgba(0,0,0,0.3) 0px 16px 24px,rgba(0,0,0,0.2) 0px 6px 8px;line-height:1.4;">'
+        + escapeHtml(text) + "</div>";
     }
 
     function ensureButtonMounted() {
@@ -104,8 +115,13 @@
       syncPanelTrack();
     });
     sp.Platform.ProductStateAPI?.subValues?.((values) => {
+      if (!values
+        || (!Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)
+          && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY))) {
+        return;
+      }
       settingsEpoch++;
-      applySyncedProductState(values);
+      applySyncedProductState(values, true);
     });
     mountButton();
     syncDjOnAir();
@@ -120,15 +136,13 @@
       toggle();
     }, true);
 
-    // Shift + D, but never while a field has focus — in Spotify's search box, a playlist name or
-    // the prompt itself a capital D is just a D.
+    // Shift + D, but never while a field or settings overlay has focus — in Spotify's search box,
+    // a playlist name, or the prompt itself a capital D is just a D.
     document.addEventListener("keydown", (event) => {
       if (event.code !== "KeyD" || !event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+      if (activeModal || activeMenu) return;
       const target = event.target;
-      // Typing always wins: in Spotify's search box or a playlist name a capital D is just a D.
-      // Inside our own sheet the shortcut still toggles, so it can close what it opened.
-      if (!view?.root.contains(target) && target instanceof HTMLElement
-        && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName))) return;
+      if (target && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName || ""))) return;
       event.preventDefault();
       toggle();
     });

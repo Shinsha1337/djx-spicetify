@@ -1,12 +1,12 @@
 // NAME: DJ X
 // DESCRIPTION: Send text requests to the real Spotify DJ X from desktop.
 // AUTHOR: Shinsha (Shinsha1337)
-// VERSION: 1.1.0
+// VERSION: 1.1.1
 // No API key, external AI service, or background server required.
 (function djx() {
   "use strict";
 
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
   const DJ_URI = "spotify:playlist:37i9dQZF1EYkqdzj48dyYq";
   const DJ_IDS = new Set([
     "37i9dQZF1EYkqdzj48dyYq", "37i9dQZF1EYkqdzj8OSOas", "37i9dQZF1EYkqdzjdvy3mw",
@@ -29,7 +29,6 @@
   // Official Spotify DJ catalog (lexicon-formatlist-provider/v2/dj/available-personas).
   const DJ_LANGUAGES = [
     {
-      languageTag: "en",
       displayName: "English",
       personas: [
         {
@@ -38,7 +37,6 @@
           descriptor: "Hype, welcoming, all charisma.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-x/f3182c2af8ef3d13fb55d78e75b13b85df94de528889d44f8a58648a94fee047.mp3",
           interactivityTitle: "Your DJ X here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Nisha (IND)",
@@ -46,7 +44,6 @@
           descriptor: "Inviting and eager, infectious energy.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-1/7d6bdfbaa33d4a8addc8e87c94985e07a93456509576eaed914cfe1d718a3fc3.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Nell (UK)",
@@ -54,7 +51,6 @@
           descriptor: "Mellow, slower, deeply knowledgeable.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-2/aba0033e6b5a8ed74eab4934a08c04a5e91dccf03f5a136292c3467700fc2804.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-GB",
         },
         {
           personaName: "Lane (US)",
@@ -62,7 +58,6 @@
           descriptor: "Big-hearted energy, bright and spirited.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-3/8e6395b17ebe70fff64c4b5a0a3347e08f317132ceeeb0fa8d8cb8c159302f22.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Tess (US)",
@@ -70,7 +65,6 @@
           descriptor: "Direct but inviting, in-the-know.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-4/5104f0af0c79df116ef47e81d696fcd40d9d0bad7ad687f5ed412888ffee10ea.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Casey (US)",
@@ -78,7 +72,6 @@
           descriptor: "Laidback presence, warm and earnest.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-5/04c7af83dbd2137e006bb6a096cbf4314c59aba6071ea76c4d5f4782c10d70de.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Sam (AUS)",
@@ -86,7 +79,6 @@
           descriptor: "Fun, keeps things not-so-serious.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-6/7377876ac0fcc07af9bb99a19be8452de87ecb4411d7c5af6e18c8ad038068b5.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Declan (IRE)",
@@ -94,12 +86,10 @@
           descriptor: "Straightforward, passionate, bit of a music nerd.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-7/9f3178b0d3fcab5275c20231b257dd2143fdaf339500a075985912d2984fc0d3.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-GB",
         },
       ],
     },
     {
-      languageTag: "es",
       displayName: "Spanish",
       personas: [
         {
@@ -108,7 +98,6 @@
           descriptor: "Witty, friendly, always a step ahead.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-1/991712e0059c12bd58e1abd9001f34df68166887f31efc4a7a280ccebc11f20f.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "es-MX",
         },
         {
           personaName: "Nico (MX)",
@@ -116,12 +105,10 @@
           descriptor: "Down to earth, present, right there with you.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-2/0c765c160c515bfa4560f34d04a20c612a5caeb8a8e32ee2f2cc53b01fd2a004.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "es-MX",
         },
       ],
     },
     {
-      languageTag: "de",
       displayName: "German",
       personas: [
         {
@@ -130,12 +117,10 @@
           descriptor: "Effortlessly cool, tells it like it is.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/de-DE-z/24cbe5174efffd9b348320ed26e945f03676d4da6c965d91304eb33c39f28eb5.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "de-DE",
         },
       ],
     },
     {
-      languageTag: "fr",
       displayName: "French",
       personas: [
         {
@@ -144,12 +129,10 @@
           descriptor: "Understated and savvy, picks up on everything.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/fr-FR-a/52f3d68a8ec40f67c5c660a2df6905758e7534be4793ba857741d6ff75e568d0.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "fr-FR",
         },
       ],
     },
     {
-      languageTag: "pt",
       displayName: "Portuguese",
       personas: [
         {
@@ -158,12 +141,10 @@
           descriptor: "Attuned, relatable, never misses a beat.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/pt-BR-b/f7bd1ada1e8ea290f0d5889fc143eb26c88f29a3874c955743ff77b86032c5fb.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "pt-BR",
         },
       ],
     },
     {
-      languageTag: "it",
       displayName: "Italian",
       personas: [
         {
@@ -172,7 +153,6 @@
           descriptor: "Eclectic, experienced, easy to trust.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/it-IT-c/fdb337d2bccf01fb504876c0af30f3e6506b1583e5b25e389366840776d735a7.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "it-IT",
         },
       ],
     },
@@ -208,10 +188,18 @@
     return { ...fallbackGroup.personas[0], languageDisplayName: fallbackGroup.displayName };
   }
 
-  function normalizeDJSettings(values = {}) {
-    const rawLang = values?.[PRODUCT_STATE_DJ_LANGUAGE];
-    const personaId = rawLang && rawLang !== "not-set" ? findPersona(rawLang).personaId : DEFAULT_PERSONA_ID;
-    const commentary = values?.[PRODUCT_STATE_DJ_COMMENTARY] === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+  function normalizeDJSettings(values = {}, current = {}) {
+    const fallbackPersona = current?.personaId ? findPersona(current.personaId).personaId : DEFAULT_PERSONA_ID;
+    const fallbackCommentary = current?.commentary === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+    let personaId = fallbackPersona;
+    if (values && Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)) {
+      const rawLang = values[PRODUCT_STATE_DJ_LANGUAGE];
+      personaId = rawLang && rawLang !== "not-set" ? findPersona(rawLang).personaId : DEFAULT_PERSONA_ID;
+    }
+    let commentary = fallbackCommentary;
+    if (values && Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY)) {
+      commentary = values[PRODUCT_STATE_DJ_COMMENTARY] === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+    }
     return { personaId, commentary };
   }
 
@@ -241,6 +229,9 @@
     if (typeof ps?.setValues !== "function") {
       throw new DJError("Something went wrong.", "settings_unavailable");
     }
+    if (typeof ps.getCachedValues === "function" && !ps.getCachedValues()) {
+      try { await ps.getValues?.(); } catch {}
+    }
     try {
       await ps.setValues({ [key]: String(value) });
     } catch {
@@ -258,6 +249,7 @@
   function isDJ(state) {
     const context = state?.context;
     return context?.metadata?.lexicon_set_type === "your_dj"
+      || context?.metadata?.agentic_product_type === "idj"
       || DJ_IDS.has(context?.uri?.replace("spotify:playlist:", ""))
       || context?.uri === "spotify:lexicon:your-dj";
   }
@@ -308,12 +300,32 @@
       return value;
     };
     while (offset < bytes.length && prompts.length < limit) {
-      if (readVarint() !== 10) break;
-      const length = readVarint();
-      if (length === null || offset + length > bytes.length) break;
-      const text = new TextDecoder().decode(bytes.subarray(offset, offset + length)).trim();
-      offset += length;
-      if (text) prompts.push(text);
+      const tag = readVarint();
+      if (tag === null) break;
+      if (tag === 10) {
+        const length = readVarint();
+        if (length === null || offset + length > bytes.length) break;
+        const text = new TextDecoder().decode(bytes.subarray(offset, offset + length)).trim();
+        offset += length;
+        if (text) prompts.push(text);
+        continue;
+      }
+      const wireType = tag & 7;
+      if (wireType === 0) {
+        if (readVarint() === null) break;
+      } else if (wireType === 1) {
+        if (offset + 8 > bytes.length) break;
+        offset += 8;
+      } else if (wireType === 2) {
+        const skip = readVarint();
+        if (skip === null || offset + skip > bytes.length) break;
+        offset += skip;
+      } else if (wireType === 5) {
+        if (offset + 4 > bytes.length) break;
+        offset += 4;
+      } else {
+        break;
+      }
     }
     return prompts;
   }
@@ -394,13 +406,12 @@
       await player.sendSignal("prompt", parameters);
     }
 
-    async function request(value, onProgress = () => {}) {
+    async function request(value) {
       const prompt = normalizePrompt(value);
       const ticket = epoch;
       const run = async () => {
         if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         const before = interactiveRequestIds(player.getState());
-        onProgress("DJ is picking music for you...");
         await sendPrompt(prompt, ticket);
         const requestId = await waitFor((state) => {
           if (!isDJ(state)) return false;
@@ -418,29 +429,28 @@
     // Spotify ignores the native "jump" once its DJ interactive window closes; a prompt
     // signal with no request text makes DJ build a fresh set of its own choice instead.
     async function letDJPick() {
-      epoch++;
-      try {
+      const ticket = ++epoch;
+      const run = (async () => {
         if (!isDJ(player.getState())) {
           await player.play({ uri: DJ_URI }, origin, {});
           await waitFor((state) => isDJ(state) && player.canSendSignal("prompt"),
-            "DJ is still loading. Try again in a moment.", "missing_session");
+            "DJ is still loading. Try again in a moment.", "missing_session", ticket);
         }
-        if (!player.canSendSignal("prompt")) {
-          throw new DJError("DJ is not taking requests right now. Try again in a moment.", "missing_session");
-        }
+        if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         await player.sendSignal("prompt", PICK_PAYLOAD);
-      } catch (error) {
-        throw readableError(error);
-      }
+      })().catch((error) => { throw readableError(error); });
+      requests = Promise.all([requests, run.catch(() => {})]).then(() => {});
+      return run;
     }
 
     async function restart() {
-      epoch++;
-      try {
+      const ticket = ++epoch;
+      const run = (async () => {
+        if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         await player.play({ uri: DJ_URI }, origin, {});
-      } catch (error) {
-        throw readableError(error);
-      }
+      })().catch((error) => { throw readableError(error); });
+      requests = Promise.all([requests, run.catch(() => {})]).then(() => {});
+      return run;
     }
 
     return { request, letDJPick, restart };

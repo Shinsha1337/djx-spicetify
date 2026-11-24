@@ -1,3 +1,6 @@
+  if (window.DJX || window.__DJX_BOOTING__) return;
+  window.__DJX_BOOTING__ = true;
+
   function boot() {
     const sp = window.Spicetify;
     if (!sp?.Platform?.PlayerAPI?.getState || !sp.Platform.PlayerAPI.canSendSignal || !sp.Platform.PlayerAPI.sendSignal
@@ -72,6 +75,11 @@
       if (view.input) {
         view.input.placeholder = `Enter a request in this language: ${persona.languageDisplayName || "English"}`;
       }
+      if (!view.closing) {
+        const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+        const cacheKey = track ? `${state.personaId}|${track}` : "";
+        if (cacheKey && cacheKey !== view.cacheKey) loadSuggestions();
+      }
     }
 
     function close() {
@@ -134,16 +142,17 @@
     }
 
     // Suggestion cards are the same server-side ideas the phone shows: fetched for the
-    // track that is playing right now, and cached briefly in memory per track.
+    // track that is playing right now, and cached briefly in memory per persona + track.
     function loadSuggestions() {
       const current = view;
       if (!current || current.closing) return;
       const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
-      current.trackUri = track;
+      const cacheKey = track ? `${state.personaId}|${track}` : "";
+      current.cacheKey = cacheKey;
       clearDynamicCards(current.cards);
 
-      if (track && suggestionCache.has(track)) {
-        renderSuggestions(current.cards, suggestionCache.get(track));
+      if (cacheKey && suggestionCache.has(cacheKey)) {
+        renderSuggestions(current.cards, suggestionCache.get(cacheKey));
         return;
       }
 
@@ -154,13 +163,15 @@
           for (const card of skeletons) card.remove();
           return;
         }
-        if ((sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "") !== track) {
+        const liveTrack = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+        const liveKey = liveTrack ? `${state.personaId}|${liveTrack}` : "";
+        if (liveKey !== cacheKey) {
           for (const card of skeletons) card.remove();
           return;
         }
-        if (track && prompts.length) {
+        if (cacheKey && prompts.length) {
           if (suggestionCache.size >= 12) suggestionCache.delete(suggestionCache.keys().next().value);
-          suggestionCache.set(track, prompts);
+          suggestionCache.set(cacheKey, prompts);
         }
         renderSuggestions(current.cards, prompts);
       }).catch(() => {
@@ -172,7 +183,8 @@
       if (!view || view.closing) return;
       applyPalette();
       const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
-      if (track && track !== view.trackUri) loadSuggestions();
+      const cacheKey = track ? `${state.personaId}|${track}` : "";
+      if (cacheKey && cacheKey !== view.cacheKey) loadSuggestions();
     }
 
     function pushHistory(prompt) {
@@ -210,16 +222,10 @@
       closeContextMenu();
       closeModal();
       if (view) {
-        if (view.closing) {
-          view.closing = false;
-          view.root.classList.remove("djx-closing");
-          view.root.classList.add("djx-visible");
-          view.input.focus();
-          return;
-        }
         view.input.focus();
         return;
       }
+      for (const stale of document.querySelectorAll("#djx-panel.djx-closing")) stale.remove();
       const root = document.createElement("section");
       root.id = "djx-panel";
       root.setAttribute("role", "dialog");
@@ -239,7 +245,7 @@
           <button type="submit" class="djx-submit" aria-label="Send request">${ICONS.send}</button>
         </form>
       `;
-      view = {
+      const current = view = {
         root,
         hero: root.querySelector(".djx-hero"),
         cards: root.querySelector(".djx-cards"),
@@ -248,7 +254,7 @@
         input: root.querySelector(".djx-input"),
         dismiss: new AbortController(),
         closing: false,
-        trackUri: "",
+        cacheKey: "",
       };
       syncPanelSettings();
       view.pick.addEventListener("click", pick);
@@ -292,10 +298,11 @@
           view.input.setSelectionRange?.(end, end);
         }
       });
-      // Prevent Spotify global shortcuts while typing in the popup. Shift + D is let through so
-      // the shortcut can close the sheet it opened.
+      // Prevent Spotify global shortcuts while typing in the popup. Shift + D is let through
+      // outside the text field so the shortcut can close the sheet it opened.
       root.addEventListener("keydown", (event) => {
-        if (event.code === "KeyD" && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) return;
+        if (event.code === "KeyD" && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey
+          && event.target !== current.input) return;
         event.stopPropagation();
       });
       // The popup is a dialog: Tab cycles inside it instead of walking into the page behind.
@@ -325,7 +332,7 @@
       // A safety net for scrolling this panel did not drive itself (drag, assistive tech).
       let alignTimer;
       const alignRow = () => {
-        const row = view?.cards;
+        const row = current.cards;
         if (!row) return;
         const stops = stopsOf(row);
         if (!stops.length) return;
@@ -337,6 +344,7 @@
         clearTimeout(alignTimer);
         alignTimer = setTimeout(alignRow, 160);
       }, { signal });
+      signal.addEventListener("abort", () => clearTimeout(alignTimer), { once: true });
 
       // One wheel notch or horizontal trackpad swipe advances a whole view: stops on a card start,
       // and nothing behind the popup moves.
@@ -367,7 +375,13 @@
         event.preventDefault();
         event.stopPropagation();
       }, { passive: false, signal });
-      document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); }, { capture: true, signal });
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+        document.getElementById("djx-button")?.focus?.();
+      }, { capture: true, signal });
       document.addEventListener("click", (event) => {
         if (!view || view.closing) return;
         if (view.root.contains(event.target) || event.target.closest?.("#djx-button")) return;

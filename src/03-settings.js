@@ -27,9 +27,14 @@
       }
     }
 
-    function applySyncedProductState(values) {
+    function applySyncedProductState(values, partial = false) {
       if (!values || !Object.keys(values).length) return;
-      const next = normalizeDJSettings(values);
+      if (partial
+        && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)
+        && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY)) {
+        return;
+      }
+      const next = normalizeDJSettings(values, partial ? state : undefined);
       state.personaId = next.personaId;
       state.commentary = next.commentary;
       syncSettingsUI();
@@ -93,13 +98,13 @@
         stopPreview(false);
         return;
       }
+      if (typeof Audio !== "function" || !persona.previewUrl) return;
       const wasSpotifyPlaying = !preview.pausedSpotify && sp.Platform.PlayerAPI.getState?.()?.isPaused === false;
       stopPreview(true);
       if (wasSpotifyPlaying) {
         preview.pausedSpotify = true;
         sp.Platform.PlayerAPI.pause?.()?.catch?.(() => {});
       }
-      if (typeof Audio !== "function" || !persona.previewUrl) return;
       const audio = new Audio(persona.previewUrl);
       const volume = sp.Platform.PlaybackAPI?.getVolume?.();
       if (typeof volume === "number" && Number.isFinite(volume)) {
@@ -133,8 +138,6 @@
       current.closing = true;
       activeModal = null;
       current.dismiss.abort();
-      current.backdrop.removeAttribute("id");
-      current.modal.removeAttribute("id");
       current.backdrop.classList.remove("djx-visible");
       setTimeout(() => current.backdrop.remove(), 160);
     };
@@ -142,6 +145,7 @@
     function mountModal({ className = "", title, subtitle = "", keepPaused = false, buildBody }) {
       closeContextMenu();
       closeModal(keepPaused);
+      for (const stale of document.querySelectorAll("#djx-modal-backdrop:not(.djx-visible)")) stale.remove();
 
       const backdrop = document.createElement("div");
       backdrop.id = "djx-modal-backdrop";
@@ -184,12 +188,6 @@
       backdrop.append(modal);
 
       modal.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          event.stopPropagation();
-          closeModal();
-          return;
-        }
         if (event.key === "Tab") {
           const items = [...modal.querySelectorAll("button")].filter((el) => !el.disabled);
           if (!items.length) return;
@@ -206,10 +204,11 @@
       }, { signal });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          closeModal();
-        }
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        closeModal();
+        document.getElementById("djx-button")?.focus?.();
       }, { capture: true, signal });
 
       backdrop.addEventListener("click", (event) => {
@@ -219,7 +218,10 @@
       document.body.append(backdrop);
       void backdrop.offsetWidth;
       backdrop.classList.add("djx-visible");
-      (modal.querySelector("button:not(.djx-modal-close)") || closeBtn).focus();
+      (modal.querySelector('[role="radio"][aria-checked="true"]')
+        || modal.querySelector(".djx-btn-primary")
+        || modal.querySelector("button:not(.djx-modal-close)")
+        || closeBtn).focus();
     }
 
     function openRestartConfirm() {
@@ -246,6 +248,7 @@
           confirmBtn.className = "djx-btn-primary";
           confirmBtn.textContent = "Restart DJ";
           confirmBtn.addEventListener("click", () => {
+            preview.pausedSpotify = false;
             closeModal(true);
             dispatch(() => client.restart());
           });
@@ -258,6 +261,10 @@
 
     async function applySettingChange(key, value) {
       const prev = key === PRODUCT_STATE_DJ_LANGUAGE ? state.personaId : state.commentary;
+      if (prev === value) {
+        syncSettingsUI();
+        return true;
+      }
       const writeTicket = ++settingsEpoch;
       try {
         await writeDJSetting(sp, key, value);
@@ -486,16 +493,15 @@
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           items[(idx - 1 + items.length) % items.length]?.focus();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          closeContextMenu();
-          anchor?.focus?.();
         }
       }, { signal });
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeContextMenu();
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        closeContextMenu();
+        anchor?.focus?.();
       }, { capture: true, signal });
       document.addEventListener("pointerdown", (e) => {
         if (!menu.contains(e.target) && e.target !== anchor && !anchor?.contains?.(e.target)) {

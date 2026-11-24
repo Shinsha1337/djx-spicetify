@@ -229,10 +229,15 @@ test("Let DJ pick cancels pending prompt work and sends the phone's prompt signa
   assert.deepEqual(calls, [{ signal: "prompt", parameters: "EAI=" }]);
   // The payload is PromptSignalPayload{ input_type = 2 } and nothing else.
   assert.equal(Buffer.from("EAI=", "base64").toString("hex"), "1002");
+
+  // Active DJ still accepts letDJPick even when Spotify drops "prompt" from capabilities.
+  const active = fixture({ ready: false });
+  await active.client.letDJPick();
+  assert.deepEqual(active.calls, [{ signal: "prompt", parameters: "EAI=" }]);
 });
 
 test("native interactive contexts remain recognizable as Spotify DJ", () => {
-  assert.equal(isDJ({ context: { uri: DJ_URI, metadata: { agentic_product_type: "idj" } } }), true);
+  assert.equal(isDJ({ context: { uri: "spotify:playlist:other", metadata: { agentic_product_type: "idj" } } }), true);
   assert.equal(isDJ({ context: { uri: "spotify:lexicon:your-dj" } }), true);
   assert.equal(isDJ({ context: { uri: "spotify:playlist:other" } }), false);
 });
@@ -246,6 +251,16 @@ test("prompt ideas use the phone's DJ backend wire format", () => {
   // Response: one repeated string field, read as tag 10 + varint length + UTF-8.
   const response = Buffer.from("0a134561726c79206d6f726e696e6720696e646965", "hex");
   assert.deepEqual(decodeSuggestedPrompts(new Uint8Array(response)), ["Early morning indie"]);
+  // Unknown wire types (0=varint, 1=64-bit, 2=length-delimited, 5=32-bit) are skipped cleanly.
+  const withUnknownFields = Buffer.from(
+    "0801" // field 1 (varint) - wait tag 8 is field 1 wireType 0
+      + "19" + "0000000000000000" // field 3, wireType 1 (8 bytes)
+      + "22026162" // field 4, wireType 2 (2 bytes)
+      + "2d00000000" // field 5, wireType 5 (4 bytes)
+      + "0a044a617a7a", // field 1, wireType 2 ("Jazz")
+    "hex",
+  );
+  assert.deepEqual(decodeSuggestedPrompts(new Uint8Array(withUnknownFields)), ["Jazz"]);
   assert.deepEqual(decodeSuggestedPrompts(new Uint8Array([0x0a, 0x40])), [], "a truncated field is dropped");
   assert.deepEqual(decodeSuggestedPrompts(new Uint8Array([])), []);
 });
@@ -304,6 +319,15 @@ test("DJ settings read, normalize, and write ProductStateAPI cleanly", async () 
     personaId: "en-GB-2",
     commentary: "sometimes",
   });
+  // Partial updates preserve the sibling setting when current state is supplied.
+  assert.deepEqual(
+    normalizeDJSettings({ "dj-voice-commentary": "sometimes" }, { personaId: "de-DE-z", commentary: "default" }),
+    { personaId: "de-DE-z", commentary: "sometimes" },
+  );
+  assert.deepEqual(
+    normalizeDJSettings({ "dj-language": "fr-FR-a" }, { personaId: "de-DE-z", commentary: "sometimes" }),
+    { personaId: "fr-FR-a", commentary: "sometimes" },
+  );
 
   const store = {
     [PRODUCT_STATE_DJ_LANGUAGE]: "en-US-1",
@@ -339,6 +363,20 @@ test("DJ settings read, normalize, and write ProductStateAPI cleanly", async () 
   };
   assert.deepEqual(await readDJSettings(staleWrapper), { personaId: "en-GB-2", commentary: "sometimes" });
   assert.equal(await readProductStateValues({ Platform: {} }), null);
+
+  // writeDJSetting warms cold ProductStateAPI cache via getValues() before setValues().
+  let warmed = false;
+  const coldCacheSp = {
+    Platform: {
+      ProductStateAPI: {
+        getCachedValues: () => (warmed ? { [PRODUCT_STATE_DJ_LANGUAGE]: "en-US-x" } : null),
+        getValues: async () => { warmed = true; return { [PRODUCT_STATE_DJ_LANGUAGE]: "en-US-x" }; },
+        setValues: async () => { assert.equal(warmed, true); },
+      },
+    },
+  };
+  await writeDJSetting(coldCacheSp, PRODUCT_STATE_DJ_COMMENTARY, "sometimes");
+  assert.equal(warmed, true);
 });
 
 test("client.restart cancels pending prompts and replays DJ context, and multi-persona DJ URIs are detected", async () => {

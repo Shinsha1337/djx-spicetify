@@ -1,12 +1,12 @@
 // NAME: DJ X
 // DESCRIPTION: Send text requests to the real Spotify DJ X from desktop.
 // AUTHOR: Shinsha (Shinsha1337)
-// VERSION: 1.1.0
+// VERSION: 1.1.1
 // No API key, external AI service, or background server required.
 (function djx() {
   "use strict";
 
-  const VERSION = "1.1.0";
+  const VERSION = "1.1.1";
   const DJ_URI = "spotify:playlist:37i9dQZF1EYkqdzj48dyYq";
   const DJ_IDS = new Set([
     "37i9dQZF1EYkqdzj48dyYq", "37i9dQZF1EYkqdzj8OSOas", "37i9dQZF1EYkqdzjdvy3mw",
@@ -29,7 +29,6 @@
   // Official Spotify DJ catalog (lexicon-formatlist-provider/v2/dj/available-personas).
   const DJ_LANGUAGES = [
     {
-      languageTag: "en",
       displayName: "English",
       personas: [
         {
@@ -38,7 +37,6 @@
           descriptor: "Hype, welcoming, all charisma.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-x/f3182c2af8ef3d13fb55d78e75b13b85df94de528889d44f8a58648a94fee047.mp3",
           interactivityTitle: "Your DJ X here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Nisha (IND)",
@@ -46,7 +44,6 @@
           descriptor: "Inviting and eager, infectious energy.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-1/7d6bdfbaa33d4a8addc8e87c94985e07a93456509576eaed914cfe1d718a3fc3.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Nell (UK)",
@@ -54,7 +51,6 @@
           descriptor: "Mellow, slower, deeply knowledgeable.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-2/aba0033e6b5a8ed74eab4934a08c04a5e91dccf03f5a136292c3467700fc2804.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-GB",
         },
         {
           personaName: "Lane (US)",
@@ -62,7 +58,6 @@
           descriptor: "Big-hearted energy, bright and spirited.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-3/8e6395b17ebe70fff64c4b5a0a3347e08f317132ceeeb0fa8d8cb8c159302f22.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Tess (US)",
@@ -70,7 +65,6 @@
           descriptor: "Direct but inviting, in-the-know.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-4/5104f0af0c79df116ef47e81d696fcd40d9d0bad7ad687f5ed412888ffee10ea.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Casey (US)",
@@ -78,7 +72,6 @@
           descriptor: "Laidback presence, warm and earnest.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-5/04c7af83dbd2137e006bb6a096cbf4314c59aba6071ea76c4d5f4782c10d70de.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Sam (AUS)",
@@ -86,7 +79,6 @@
           descriptor: "Fun, keeps things not-so-serious.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-US-6/7377876ac0fcc07af9bb99a19be8452de87ecb4411d7c5af6e18c8ad038068b5.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-US",
         },
         {
           personaName: "Declan (IRE)",
@@ -94,12 +86,10 @@
           descriptor: "Straightforward, passionate, bit of a music nerd.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/en-GB-7/9f3178b0d3fcab5275c20231b257dd2143fdaf339500a075985912d2984fc0d3.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "en-GB",
         },
       ],
     },
     {
-      languageTag: "es",
       displayName: "Spanish",
       personas: [
         {
@@ -108,7 +98,6 @@
           descriptor: "Witty, friendly, always a step ahead.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-1/991712e0059c12bd58e1abd9001f34df68166887f31efc4a7a280ccebc11f20f.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "es-MX",
         },
         {
           personaName: "Nico (MX)",
@@ -116,12 +105,10 @@
           descriptor: "Down to earth, present, right there with you.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/es-MX-2/0c765c160c515bfa4560f34d04a20c612a5caeb8a8e32ee2f2cc53b01fd2a004.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "es-MX",
         },
       ],
     },
     {
-      languageTag: "de",
       displayName: "German",
       personas: [
         {
@@ -130,12 +117,10 @@
           descriptor: "Effortlessly cool, tells it like it is.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/de-DE-z/24cbe5174efffd9b348320ed26e945f03676d4da6c965d91304eb33c39f28eb5.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "de-DE",
         },
       ],
     },
     {
-      languageTag: "fr",
       displayName: "French",
       personas: [
         {
@@ -144,12 +129,10 @@
           descriptor: "Understated and savvy, picks up on everything.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/fr-FR-a/52f3d68a8ec40f67c5c660a2df6905758e7534be4793ba857741d6ff75e568d0.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "fr-FR",
         },
       ],
     },
     {
-      languageTag: "pt",
       displayName: "Portuguese",
       personas: [
         {
@@ -158,12 +141,10 @@
           descriptor: "Attuned, relatable, never misses a beat.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/pt-BR-b/f7bd1ada1e8ea290f0d5889fc143eb26c88f29a3874c955743ff77b86032c5fb.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "pt-BR",
         },
       ],
     },
     {
-      languageTag: "it",
       displayName: "Italian",
       personas: [
         {
@@ -172,7 +153,6 @@
           descriptor: "Eclectic, experienced, easy to trust.",
           previewUrl: "https://lexicon-assets.spotifycdn.com/dj-persona-previews/it-IT-c/fdb337d2bccf01fb504876c0af30f3e6506b1583e5b25e389366840776d735a7.mp3",
           interactivityTitle: "Your DJ here. What can I play for you?",
-          localeTag: "it-IT",
         },
       ],
     },
@@ -208,10 +188,18 @@
     return { ...fallbackGroup.personas[0], languageDisplayName: fallbackGroup.displayName };
   }
 
-  function normalizeDJSettings(values = {}) {
-    const rawLang = values?.[PRODUCT_STATE_DJ_LANGUAGE];
-    const personaId = rawLang && rawLang !== "not-set" ? findPersona(rawLang).personaId : DEFAULT_PERSONA_ID;
-    const commentary = values?.[PRODUCT_STATE_DJ_COMMENTARY] === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+  function normalizeDJSettings(values = {}, current = {}) {
+    const fallbackPersona = current?.personaId ? findPersona(current.personaId).personaId : DEFAULT_PERSONA_ID;
+    const fallbackCommentary = current?.commentary === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+    let personaId = fallbackPersona;
+    if (values && Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)) {
+      const rawLang = values[PRODUCT_STATE_DJ_LANGUAGE];
+      personaId = rawLang && rawLang !== "not-set" ? findPersona(rawLang).personaId : DEFAULT_PERSONA_ID;
+    }
+    let commentary = fallbackCommentary;
+    if (values && Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY)) {
+      commentary = values[PRODUCT_STATE_DJ_COMMENTARY] === "sometimes" ? "sometimes" : DEFAULT_COMMENTARY_MODE;
+    }
     return { personaId, commentary };
   }
 
@@ -241,6 +229,9 @@
     if (typeof ps?.setValues !== "function") {
       throw new DJError("Something went wrong.", "settings_unavailable");
     }
+    if (typeof ps.getCachedValues === "function" && !ps.getCachedValues()) {
+      try { await ps.getValues?.(); } catch {}
+    }
     try {
       await ps.setValues({ [key]: String(value) });
     } catch {
@@ -258,6 +249,7 @@
   function isDJ(state) {
     const context = state?.context;
     return context?.metadata?.lexicon_set_type === "your_dj"
+      || context?.metadata?.agentic_product_type === "idj"
       || DJ_IDS.has(context?.uri?.replace("spotify:playlist:", ""))
       || context?.uri === "spotify:lexicon:your-dj";
   }
@@ -308,12 +300,32 @@
       return value;
     };
     while (offset < bytes.length && prompts.length < limit) {
-      if (readVarint() !== 10) break;
-      const length = readVarint();
-      if (length === null || offset + length > bytes.length) break;
-      const text = new TextDecoder().decode(bytes.subarray(offset, offset + length)).trim();
-      offset += length;
-      if (text) prompts.push(text);
+      const tag = readVarint();
+      if (tag === null) break;
+      if (tag === 10) {
+        const length = readVarint();
+        if (length === null || offset + length > bytes.length) break;
+        const text = new TextDecoder().decode(bytes.subarray(offset, offset + length)).trim();
+        offset += length;
+        if (text) prompts.push(text);
+        continue;
+      }
+      const wireType = tag & 7;
+      if (wireType === 0) {
+        if (readVarint() === null) break;
+      } else if (wireType === 1) {
+        if (offset + 8 > bytes.length) break;
+        offset += 8;
+      } else if (wireType === 2) {
+        const skip = readVarint();
+        if (skip === null || offset + skip > bytes.length) break;
+        offset += skip;
+      } else if (wireType === 5) {
+        if (offset + 4 > bytes.length) break;
+        offset += 4;
+      } else {
+        break;
+      }
     }
     return prompts;
   }
@@ -394,13 +406,12 @@
       await player.sendSignal("prompt", parameters);
     }
 
-    async function request(value, onProgress = () => {}) {
+    async function request(value) {
       const prompt = normalizePrompt(value);
       const ticket = epoch;
       const run = async () => {
         if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         const before = interactiveRequestIds(player.getState());
-        onProgress("DJ is picking music for you...");
         await sendPrompt(prompt, ticket);
         const requestId = await waitFor((state) => {
           if (!isDJ(state)) return false;
@@ -418,29 +429,28 @@
     // Spotify ignores the native "jump" once its DJ interactive window closes; a prompt
     // signal with no request text makes DJ build a fresh set of its own choice instead.
     async function letDJPick() {
-      epoch++;
-      try {
+      const ticket = ++epoch;
+      const run = (async () => {
         if (!isDJ(player.getState())) {
           await player.play({ uri: DJ_URI }, origin, {});
           await waitFor((state) => isDJ(state) && player.canSendSignal("prompt"),
-            "DJ is still loading. Try again in a moment.", "missing_session");
+            "DJ is still loading. Try again in a moment.", "missing_session", ticket);
         }
-        if (!player.canSendSignal("prompt")) {
-          throw new DJError("DJ is not taking requests right now. Try again in a moment.", "missing_session");
-        }
+        if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         await player.sendSignal("prompt", PICK_PAYLOAD);
-      } catch (error) {
-        throw readableError(error);
-      }
+      })().catch((error) => { throw readableError(error); });
+      requests = Promise.all([requests, run.catch(() => {})]).then(() => {});
+      return run;
     }
 
     async function restart() {
-      epoch++;
-      try {
+      const ticket = ++epoch;
+      const run = (async () => {
+        if (ticket !== epoch) throw new DJError("DJ request cancelled.", "cancelled");
         await player.play({ uri: DJ_URI }, origin, {});
-      } catch (error) {
-        throw readableError(error);
-      }
+      })().catch((error) => { throw readableError(error); });
+      requests = Promise.all([requests, run.catch(() => {})]).then(() => {});
+      return run;
     }
 
     return { request, letDJPick, restart };
@@ -508,8 +518,11 @@
 
   const STYLE = `
     /* Hide Spotify's native DJ button when it mounts/unmounts, so only our persistent button is shown */
-    html .main-nowPlayingBar-extraControls span:has(button:is([data-testid="dj-button"], [data-testid="dj-jump-button"], :has(svg path[d^="M7.813 14.497"]))),
-    html .main-nowPlayingBar-extraControls button:is([data-testid="dj-button"], [data-testid="dj-jump-button"], :has(svg path[d^="M7.813 14.497"])):not(#djx-button) {
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button)[data-testid="dj-button"]),
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button)[data-testid="dj-jump-button"]),
+    html .main-nowPlayingBar-extraControls span:has(button:not(#djx-button) svg path[d^="M7.813 14.497"]),
+    html .main-nowPlayingBar-extraControls button:not(#djx-button):is([data-testid="dj-button"], [data-testid="dj-jump-button"]),
+    html .main-nowPlayingBar-extraControls button:not(#djx-button):has(svg path[d^="M7.813 14.497"]) {
       display: none !important;
     }
     /* Persistent DJ button inherits Spotify's native extraControls / Spicy Lyrics hover behaviour */
@@ -681,6 +694,7 @@
       border: 0 !important;
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1);
       color: #b6ceea;
+      color: color-mix(in srgb, #ffffff 74%, var(--djx-background));
       font-size: 13px;
       font-weight: 500;
       line-height: 1.4;
@@ -742,6 +756,7 @@
       gap: 8px;
       padding: 10px 12px;
       background: var(--djx-tray);
+      background: color-mix(in srgb, var(--djx-background) 78%, #000000);
       border-top: 1px solid rgba(255, 255, 255, 0.08);
     }
     .djx-input {
@@ -969,7 +984,8 @@
       transition: background 0.12s ease;
     }
     .djx-option-row:hover,
-    .djx-option-row:focus-visible {
+    .djx-option-row:focus-visible,
+    .djx-option-row:has(.djx-option-select:focus-visible) {
       background: rgba(255, 255, 255, 0.08);
       outline: none;
     }
@@ -990,6 +1006,10 @@
     }
     .djx-preview-btn:hover {
       transform: scale(1.06);
+    }
+    .djx-preview-btn:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
     }
     .djx-preview-btn:active {
       transform: scale(0.96);
@@ -1079,6 +1099,10 @@
     .djx-btn-secondary:hover {
       background: rgba(255, 255, 255, 0.1);
     }
+    .djx-btn-secondary:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
     .djx-btn-primary {
       height: 36px;
       padding: 0 22px;
@@ -1095,6 +1119,10 @@
       transform: scale(1.03);
       background: #f0f0f0;
     }
+    .djx-btn-primary:focus-visible {
+      outline: 2px solid #ffffff;
+      outline-offset: 2px;
+    }
     @media (prefers-reduced-motion: reduce) {
       #djx-panel, #djx-panel.djx-closing, #djx-button, #djx-button.djx-pending svg,
       #djx-modal-backdrop, #djx-modal, .djx-pick, .djx-suggest, .djx-submit,
@@ -1108,6 +1136,9 @@
       }
     }
   `;
+
+  if (window.DJX || window.__DJX_BOOTING__) return;
+  window.__DJX_BOOTING__ = true;
 
   function boot() {
     const sp = window.Spicetify;
@@ -1183,6 +1214,11 @@
       if (view.input) {
         view.input.placeholder = `Enter a request in this language: ${persona.languageDisplayName || "English"}`;
       }
+      if (!view.closing) {
+        const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+        const cacheKey = track ? `${state.personaId}|${track}` : "";
+        if (cacheKey && cacheKey !== view.cacheKey) loadSuggestions();
+      }
     }
 
     function close() {
@@ -1245,16 +1281,17 @@
     }
 
     // Suggestion cards are the same server-side ideas the phone shows: fetched for the
-    // track that is playing right now, and cached briefly in memory per track.
+    // track that is playing right now, and cached briefly in memory per persona + track.
     function loadSuggestions() {
       const current = view;
       if (!current || current.closing) return;
       const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
-      current.trackUri = track;
+      const cacheKey = track ? `${state.personaId}|${track}` : "";
+      current.cacheKey = cacheKey;
       clearDynamicCards(current.cards);
 
-      if (track && suggestionCache.has(track)) {
-        renderSuggestions(current.cards, suggestionCache.get(track));
+      if (cacheKey && suggestionCache.has(cacheKey)) {
+        renderSuggestions(current.cards, suggestionCache.get(cacheKey));
         return;
       }
 
@@ -1265,13 +1302,15 @@
           for (const card of skeletons) card.remove();
           return;
         }
-        if ((sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "") !== track) {
+        const liveTrack = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
+        const liveKey = liveTrack ? `${state.personaId}|${liveTrack}` : "";
+        if (liveKey !== cacheKey) {
           for (const card of skeletons) card.remove();
           return;
         }
-        if (track && prompts.length) {
+        if (cacheKey && prompts.length) {
           if (suggestionCache.size >= 12) suggestionCache.delete(suggestionCache.keys().next().value);
-          suggestionCache.set(track, prompts);
+          suggestionCache.set(cacheKey, prompts);
         }
         renderSuggestions(current.cards, prompts);
       }).catch(() => {
@@ -1283,7 +1322,8 @@
       if (!view || view.closing) return;
       applyPalette();
       const track = sp.Platform.PlayerAPI.getState?.()?.item?.uri ?? "";
-      if (track && track !== view.trackUri) loadSuggestions();
+      const cacheKey = track ? `${state.personaId}|${track}` : "";
+      if (cacheKey && cacheKey !== view.cacheKey) loadSuggestions();
     }
 
     function pushHistory(prompt) {
@@ -1321,16 +1361,10 @@
       closeContextMenu();
       closeModal();
       if (view) {
-        if (view.closing) {
-          view.closing = false;
-          view.root.classList.remove("djx-closing");
-          view.root.classList.add("djx-visible");
-          view.input.focus();
-          return;
-        }
         view.input.focus();
         return;
       }
+      for (const stale of document.querySelectorAll("#djx-panel.djx-closing")) stale.remove();
       const root = document.createElement("section");
       root.id = "djx-panel";
       root.setAttribute("role", "dialog");
@@ -1350,7 +1384,7 @@
           <button type="submit" class="djx-submit" aria-label="Send request">${ICONS.send}</button>
         </form>
       `;
-      view = {
+      const current = view = {
         root,
         hero: root.querySelector(".djx-hero"),
         cards: root.querySelector(".djx-cards"),
@@ -1359,7 +1393,7 @@
         input: root.querySelector(".djx-input"),
         dismiss: new AbortController(),
         closing: false,
-        trackUri: "",
+        cacheKey: "",
       };
       syncPanelSettings();
       view.pick.addEventListener("click", pick);
@@ -1403,10 +1437,11 @@
           view.input.setSelectionRange?.(end, end);
         }
       });
-      // Prevent Spotify global shortcuts while typing in the popup. Shift + D is let through so
-      // the shortcut can close the sheet it opened.
+      // Prevent Spotify global shortcuts while typing in the popup. Shift + D is let through
+      // outside the text field so the shortcut can close the sheet it opened.
       root.addEventListener("keydown", (event) => {
-        if (event.code === "KeyD" && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey) return;
+        if (event.code === "KeyD" && event.shiftKey && !event.ctrlKey && !event.altKey && !event.metaKey
+          && event.target !== current.input) return;
         event.stopPropagation();
       });
       // The popup is a dialog: Tab cycles inside it instead of walking into the page behind.
@@ -1436,7 +1471,7 @@
       // A safety net for scrolling this panel did not drive itself (drag, assistive tech).
       let alignTimer;
       const alignRow = () => {
-        const row = view?.cards;
+        const row = current.cards;
         if (!row) return;
         const stops = stopsOf(row);
         if (!stops.length) return;
@@ -1448,6 +1483,7 @@
         clearTimeout(alignTimer);
         alignTimer = setTimeout(alignRow, 160);
       }, { signal });
+      signal.addEventListener("abort", () => clearTimeout(alignTimer), { once: true });
 
       // One wheel notch or horizontal trackpad swipe advances a whole view: stops on a card start,
       // and nothing behind the popup moves.
@@ -1478,7 +1514,13 @@
         event.preventDefault();
         event.stopPropagation();
       }, { passive: false, signal });
-      document.addEventListener("keydown", (event) => { if (event.key === "Escape") close(); }, { capture: true, signal });
+      document.addEventListener("keydown", (event) => {
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        close();
+        document.getElementById("djx-button")?.focus?.();
+      }, { capture: true, signal });
       document.addEventListener("click", (event) => {
         if (!view || view.closing) return;
         if (view.root.contains(event.target) || event.target.closest?.("#djx-button")) return;
@@ -1533,9 +1575,14 @@
       }
     }
 
-    function applySyncedProductState(values) {
+    function applySyncedProductState(values, partial = false) {
       if (!values || !Object.keys(values).length) return;
-      const next = normalizeDJSettings(values);
+      if (partial
+        && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)
+        && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY)) {
+        return;
+      }
+      const next = normalizeDJSettings(values, partial ? state : undefined);
       state.personaId = next.personaId;
       state.commentary = next.commentary;
       syncSettingsUI();
@@ -1599,13 +1646,13 @@
         stopPreview(false);
         return;
       }
+      if (typeof Audio !== "function" || !persona.previewUrl) return;
       const wasSpotifyPlaying = !preview.pausedSpotify && sp.Platform.PlayerAPI.getState?.()?.isPaused === false;
       stopPreview(true);
       if (wasSpotifyPlaying) {
         preview.pausedSpotify = true;
         sp.Platform.PlayerAPI.pause?.()?.catch?.(() => {});
       }
-      if (typeof Audio !== "function" || !persona.previewUrl) return;
       const audio = new Audio(persona.previewUrl);
       const volume = sp.Platform.PlaybackAPI?.getVolume?.();
       if (typeof volume === "number" && Number.isFinite(volume)) {
@@ -1639,8 +1686,6 @@
       current.closing = true;
       activeModal = null;
       current.dismiss.abort();
-      current.backdrop.removeAttribute("id");
-      current.modal.removeAttribute("id");
       current.backdrop.classList.remove("djx-visible");
       setTimeout(() => current.backdrop.remove(), 160);
     };
@@ -1648,6 +1693,7 @@
     function mountModal({ className = "", title, subtitle = "", keepPaused = false, buildBody }) {
       closeContextMenu();
       closeModal(keepPaused);
+      for (const stale of document.querySelectorAll("#djx-modal-backdrop:not(.djx-visible)")) stale.remove();
 
       const backdrop = document.createElement("div");
       backdrop.id = "djx-modal-backdrop";
@@ -1690,12 +1736,6 @@
       backdrop.append(modal);
 
       modal.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          event.stopPropagation();
-          closeModal();
-          return;
-        }
         if (event.key === "Tab") {
           const items = [...modal.querySelectorAll("button")].filter((el) => !el.disabled);
           if (!items.length) return;
@@ -1712,10 +1752,11 @@
       }, { signal });
 
       document.addEventListener("keydown", (event) => {
-        if (event.key === "Escape") {
-          event.preventDefault();
-          closeModal();
-        }
+        if (event.key !== "Escape") return;
+        event.preventDefault();
+        event.stopPropagation();
+        closeModal();
+        document.getElementById("djx-button")?.focus?.();
       }, { capture: true, signal });
 
       backdrop.addEventListener("click", (event) => {
@@ -1725,7 +1766,10 @@
       document.body.append(backdrop);
       void backdrop.offsetWidth;
       backdrop.classList.add("djx-visible");
-      (modal.querySelector("button:not(.djx-modal-close)") || closeBtn).focus();
+      (modal.querySelector('[role="radio"][aria-checked="true"]')
+        || modal.querySelector(".djx-btn-primary")
+        || modal.querySelector("button:not(.djx-modal-close)")
+        || closeBtn).focus();
     }
 
     function openRestartConfirm() {
@@ -1752,6 +1796,7 @@
           confirmBtn.className = "djx-btn-primary";
           confirmBtn.textContent = "Restart DJ";
           confirmBtn.addEventListener("click", () => {
+            preview.pausedSpotify = false;
             closeModal(true);
             dispatch(() => client.restart());
           });
@@ -1764,6 +1809,10 @@
 
     async function applySettingChange(key, value) {
       const prev = key === PRODUCT_STATE_DJ_LANGUAGE ? state.personaId : state.commentary;
+      if (prev === value) {
+        syncSettingsUI();
+        return true;
+      }
       const writeTicket = ++settingsEpoch;
       try {
         await writeDJSetting(sp, key, value);
@@ -1992,16 +2041,15 @@
         } else if (e.key === "ArrowUp") {
           e.preventDefault();
           items[(idx - 1 + items.length) % items.length]?.focus();
-        } else if (e.key === "Escape") {
-          e.preventDefault();
-          e.stopPropagation();
-          closeContextMenu();
-          anchor?.focus?.();
         }
       }, { signal });
 
       document.addEventListener("keydown", (e) => {
-        if (e.key === "Escape") closeContextMenu();
+        if (e.key !== "Escape") return;
+        e.preventDefault();
+        e.stopPropagation();
+        closeContextMenu();
+        anchor?.focus?.();
       }, { capture: true, signal });
       document.addEventListener("pointerdown", (e) => {
         if (!menu.contains(e.target) && e.target !== anchor && !anchor?.contains?.(e.target)) {
@@ -2024,12 +2072,16 @@
 
     function nativeButtonClasses(bar) {
       const sibling = bar.querySelector('button[data-testid="lyrics-button"], button.main-genericButton-button:not(#djx-button)');
-      if (!sibling?.className) return FALLBACK_BTN_CLASS;
+      if (!sibling?.className) return { className: FALLBACK_BTN_CLASS, matched: false };
       const kept = sibling.className
         .split(/\s+/)
-        .filter((cls) => cls && !cls.endsWith("-active") && !/^djx-/i.test(cls) && !/^SpicyLyrics/i.test(cls));
+        .filter((cls) => cls
+          && !cls.endsWith("-active")
+          && !/^main-genericButton-buttonActive/i.test(cls)
+          && !/^djx-/i.test(cls)
+          && !/^SpicyLyrics/i.test(cls));
       if (!kept.includes("main-genericButton-button")) kept.unshift("main-genericButton-button");
-      return kept.join(" ") || FALLBACK_BTN_CLASS;
+      return { className: kept.join(" ") || FALLBACK_BTN_CLASS, matched: true };
     }
 
     // Mount our persistent button into .main-nowPlayingBar-extraControls to the left of lyrics
@@ -2039,14 +2091,15 @@
       const lyrics = bar.querySelector('button[data-testid="lyrics-button"]');
       let button = document.getElementById("djx-button");
       if (!button) {
+        const { className, matched } = nativeButtonClasses(bar);
         button = document.createElement("button");
         button.id = "djx-button";
         button.type = "button";
-        button.className = nativeButtonClasses(bar);
+        button.className = className;
         button.setAttribute("aria-label", "DJ");
         button.setAttribute("aria-haspopup", "menu");
         button.innerHTML = `<span aria-hidden="true" class="Wrapper-sm-only Wrapper-small-only">${ICONS.dj}</span>`;
-        if (lyrics) button.dataset.djxStyled = "1";
+        if (matched) button.dataset.djxStyled = "1";
         let tippyInstance = null;
         if (typeof sp.Tippy === "function") {
           tippyInstance = sp.Tippy(button, {
@@ -2067,13 +2120,13 @@
           openContextMenu(button, event);
         });
       } else if (button.dataset.djxStyled !== "1") {
-        const cls = nativeButtonClasses(bar);
+        const { className, matched } = nativeButtonClasses(bar);
         const keepActive = button.classList.contains("djx-active");
         const keepPending = button.classList.contains("djx-pending");
-        button.className = cls;
+        button.className = className;
         if (keepActive) button.classList.add("djx-active");
         if (keepPending) button.classList.add("djx-pending");
-        if (lyrics) button.dataset.djxStyled = "1";
+        if (matched) button.dataset.djxStyled = "1";
       }
 
       if (lyrics && lyrics.parentElement === bar) {
@@ -2090,15 +2143,21 @@
       const button = document.getElementById("djx-button");
       if (!button) return;
       const stateSnapshot = sp.Platform.PlayerAPI.getState?.();
-      // A snapshot taken mid-switch has no context; keep the previous reading instead of flickering.
-      if (!stateSnapshot?.context?.uri) return;
+      if (!stateSnapshot) return;
+      // A snapshot taken mid-switch has no context; keep the previous reading only while loading.
+      if (!stateSnapshot.context?.uri) {
+        if (!stateSnapshot.isBuffering && !stateSnapshot.context?.isLoading) {
+          button.classList.remove("djx-active");
+        }
+        return;
+      }
       button.style.setProperty("--djx-accent", djPalette(stateSnapshot.context.metadata).accent);
       button.classList.toggle("djx-active", isDJ(stateSnapshot));
     }
 
     function tooltip(text) {
-      return '<div id="context-menu"><div class="a_QAHZU3VTgG_kDYWmDv" style="background-color:rgb(40,40,40);color:#fff;border-radius:4px;padding:4px 8px;font-size:14px;font-weight:400;box-shadow:rgba(0,0,0,0.3) 0px 16px 24px,rgba(0,0,0,0.2) 0px 6px 8px;line-height:1.4;"><span id="hover-or-focus-tooltip" role="tooltip">'
-        + text + "</span></div></div>";
+      return '<div class="djx-tooltip" role="tooltip" style="background-color:rgb(40,40,40);color:#fff;border-radius:4px;padding:4px 8px;font-size:14px;font-weight:400;box-shadow:rgba(0,0,0,0.3) 0px 16px 24px,rgba(0,0,0,0.2) 0px 6px 8px;line-height:1.4;">'
+        + escapeHtml(text) + "</div>";
     }
 
     function ensureButtonMounted() {
@@ -2121,8 +2180,13 @@
       syncPanelTrack();
     });
     sp.Platform.ProductStateAPI?.subValues?.((values) => {
+      if (!values
+        || (!Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_LANGUAGE)
+          && !Object.prototype.hasOwnProperty.call(values, PRODUCT_STATE_DJ_COMMENTARY))) {
+        return;
+      }
       settingsEpoch++;
-      applySyncedProductState(values);
+      applySyncedProductState(values, true);
     });
     mountButton();
     syncDjOnAir();
@@ -2137,15 +2201,13 @@
       toggle();
     }, true);
 
-    // Shift + D, but never while a field has focus — in Spotify's search box, a playlist name or
-    // the prompt itself a capital D is just a D.
+    // Shift + D, but never while a field or settings overlay has focus — in Spotify's search box,
+    // a playlist name, or the prompt itself a capital D is just a D.
     document.addEventListener("keydown", (event) => {
       if (event.code !== "KeyD" || !event.shiftKey || event.ctrlKey || event.altKey || event.metaKey || event.repeat) return;
+      if (activeModal || activeMenu) return;
       const target = event.target;
-      // Typing always wins: in Spotify's search box or a playlist name a capital D is just a D.
-      // Inside our own sheet the shortcut still toggles, so it can close what it opened.
-      if (!view?.root.contains(target) && target instanceof HTMLElement
-        && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName))) return;
+      if (target && (target.isContentEditable || /^(input|textarea|select)$/i.test(target.tagName || ""))) return;
       event.preventDefault();
       toggle();
     });
